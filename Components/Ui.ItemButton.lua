@@ -137,11 +137,19 @@ Bagshui:LoadComponent(function()
   --- Create a new item slot button.
   ---@param name string Unique name for the button (will be passed to `Ui:CreateElementName()`).
   ---@param parent table Parent frame.
+  ---@param template string? Optional XML template override.
   ---@return table itemSlotButton
-  function Ui:CreateItemSlotButton(name, parent)
+  function Ui:CreateItemSlotButton(name, parent, template)
     assert(name, "CreateItemSlotButton(): name is required")
 
-    local button = _G.CreateFrame("Button", self:CreateElementName(name), parent, "ItemButtonTemplate")
+    local secureClick = (type(template) == "string" and string.find(template, "SecureActionButtonTemplate", 1, true))
+
+    local button = _G.CreateFrame(
+      "Button",
+      self:CreateElementName(name),
+      parent,
+      template or "ItemButtonTemplate"
+    )
 
     button.bagshuiData = {
       type = BS_UI_ITEM_BUTTON_TYPE.ITEM,
@@ -152,7 +160,11 @@ Bagshui:LoadComponent(function()
 
     -- Default script handlers.
     button:SetScript("OnEnter", ItemButton_OnEnter)
-    button:SetScript("OnClick", ItemButton_OnClick)
+    if secureClick then
+      button:SetScript("PostClick", ItemButton_OnClick)
+    else
+      button:SetScript("OnClick", ItemButton_OnClick)
+    end
     button:SetScript("OnLeave", ItemButton_OnLeave)
     button:SetScript("OnUpdate", ItemButton_OnUpdate)
     button:SetScript("OnHide", ItemButton_OnHide)
@@ -1060,4 +1072,3 @@ Bagshui:LoadComponent(function()
     end
   end
 end)
-

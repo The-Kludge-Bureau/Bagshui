@@ -4,6 +4,23 @@ Bagshui:AddComponent(function()
   local Inventory = Bagshui.prototypes.Inventory
   local InventoryUi = Bagshui.prototypes.InventoryUi
 
+  --- Clear any secure item-use attributes that were prepared for a click.
+  ---@param itemButton table
+  local function clearSecureItemUse(itemButton)
+    if not itemButton or (_G.InCombatLockdown and _G.InCombatLockdown()) then
+      return
+    end
+
+    itemButton:SetAttribute("type1", nil)
+    itemButton:SetAttribute("item1", nil)
+    itemButton:SetAttribute("type2", nil)
+    itemButton:SetAttribute("item2", nil)
+
+    if itemButton.bagshuiData then
+      itemButton.bagshuiData.secureItemUseButton = nil
+    end
+  end
+
   --- Special OnHide for Inventory item slot buttons to also hide tooltips and
   --- the stack split frame.
   local function InventoryItemButton_OnHide()
@@ -31,15 +48,18 @@ Bagshui:AddComponent(function()
 
     -- Wrapper functions so we can reference self.
     if not inventory._itemSlotButton_ScriptWrapper_OnClick then
-      function inventory._itemSlotButton_ScriptWrapper_OnClick()
-        inventory:ItemButton_OnClick(_G.arg1)
+      function inventory._itemSlotButton_ScriptWrapper_PreClick(itemButton, mouseButton)
+        inventory:ItemButton_PreClick(mouseButton, itemButton)
       end
-      function inventory._itemSlotButton_ScriptWrapper_OnDragStart()
-        inventory:ItemButton_OnClick("LeftButton", true)
+      function inventory._itemSlotButton_ScriptWrapper_OnClick(itemButton, mouseButton)
+        inventory:ItemButton_OnClick(mouseButton, nil, itemButton)
       end
-      function inventory._itemSlotButton_ScriptWrapper_OnReceiveDrag()
+      function inventory._itemSlotButton_ScriptWrapper_OnDragStart(itemButton)
+        inventory:ItemButton_OnClick("LeftButton", true, itemButton)
+      end
+      function inventory._itemSlotButton_ScriptWrapper_OnReceiveDrag(itemButton)
         if _G.CursorHasItem() then
-          inventory:ItemButton_OnClick("LeftButton", true)
+          inventory:ItemButton_OnClick("LeftButton", true, itemButton)
         end
       end
       function inventory._itemSlotButton_ScriptWrapper_OnUpdate()
@@ -58,7 +78,11 @@ Bagshui:AddComponent(function()
 
     ui:CreateIfNotExists(buttonNum, ui.buttons.itemSlots, function(elementNum)
       -- The button is created normally, then customized for Inventory use.
-      local slotButton = ui:CreateItemSlotButton("Item" .. elementNum, inventory.uiFrame)
+      local slotButton = ui:CreateItemSlotButton(
+        "Item" .. elementNum,
+        inventory.uiFrame,
+        "SecureActionButtonTemplate,ItemButtonTemplate"
+      )
       ui.buttons.itemSlots[elementNum] = slotButton
 
       -- Used by OnUpdate to manage real-time stock badge fading.
@@ -72,7 +96,8 @@ Bagshui:AddComponent(function()
       slotButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
       slotButton:RegisterForDrag("LeftButton")
 
-      slotButton:SetScript("OnClick", inventory._itemSlotButton_ScriptWrapper_OnClick)
+      slotButton:SetScript("PreClick", inventory._itemSlotButton_ScriptWrapper_PreClick)
+      slotButton:SetScript("PostClick", inventory._itemSlotButton_ScriptWrapper_OnClick)
       slotButton:SetScript("OnDragStart", inventory._itemSlotButton_ScriptWrapper_OnDragStart)
       slotButton:SetScript("OnReceiveDrag", inventory._itemSlotButton_ScriptWrapper_OnReceiveDrag)
       slotButton:SetScript("OnUpdate", inventory._itemSlotButton_ScriptWrapper_OnUpdate)
@@ -82,6 +107,180 @@ Bagshui:AddComponent(function()
 
       self:AddItemSlotButtonGetIdProxy(slotButton)
     end)
+  end
+
+  --- Determine whether the current click should be handled by Wrath's secure item-use path.
+  ---@param item table Bagshui item.
+  ---@param mouseButton string
+  ---@return boolean
+  function Inventory:ShouldUseItemSecurely(item, mouseButton)
+    if type(item) ~= "table" or item.emptySlot == 1 or self.editMode or not self.online then
+      return false
+    end
+
+    if self.itemPendingSale and self.itemPendingSale ~= item then
+      return false
+    end
+
+    if
+      Bagshui.cursorBagSlotNum
+      and BsItemInfo:IsContainer(item)
+      and self.inventoryIdsToContainerIds[Bagshui.cursorBagSlotNum]
+    then
+      return false
+    end
+
+    if mouseButton == "LeftButton" then
+      return (
+        -- Mail addon - Alt+click (it only provides right-click).
+        (
+          _G.IsAltKeyDown()
+          and self.settings.altClickAttach
+          and self.ui:IsFrameVisible("MailFrame")
+          and _G.IsAddOnLoaded("Mail")
+        )
+        -- aux - Alt+click (it only provides right-click).
+        or (
+          _G.IsAltKeyDown()
+          and self.settings.altClickAttach
+          and _G.IsAddOnLoaded("aux-addon")
+          and self.ui:IsFrameVisible("aux_frame")
+        )
+        -- Spell targeting uses `UseContainerItem()` on Blizzard's left-click path.
+        or (_G.SpellCanTargetItem and _G.SpellCanTargetItem())
+      ) and not _G.CursorHasItem()
+    end
+
+    if mouseButton ~= "RightButton" then
+      return false
+    end
+
+    -- Alt+right-click opens the item menu instead of using the item.
+    if _G.IsAltKeyDown() and not _G.IsControlKeyDown() and not _G.IsShiftKeyDown() then
+      return false
+    end
+
+    -- Merchant sale protection must intercept before the item can be sold.
+    if
+      self.ui:IsFrameVisible("MerchantFrame")
+      and not _G.IsControlKeyDown()
+      and not (_G.IsControlKeyDown() and _G.IsAltKeyDown() and _G.IsShiftKeyDown())
+      and self:GetItemSellProtectionReason(item)
+    then
+      return false
+    end
+
+    -- Blizzard Mail Attachments - Right-click/Alt+click.
+    if
+      self:IsItemClickActionAllowed(mouseButton, "InboxFrame", "SendMailFrame")
+      and not _G.IsAddOnLoaded("Mail")
+      and _G.SendMailPackageButton:IsEnabled() == 1
+    then
+      return false
+    end
+
+    -- CT_MailMod, Postal, and Postal Returned - Right-click.
+    if
+      mouseButton == "RightButton"
+      and self.settings.rightClickAttach
+      and (
+        (_G.IsAddOnLoaded("CT_MailMod") and self.ui:IsFrameVisible("CT_MailFrame"))
+        or (
+          (
+            _G.IsAddOnLoaded("Postal")
+            or _G.IsAddOnLoaded("Postal Returned")
+            or _G.IsAddOnLoaded("Postal-Returned")
+          ) and self.ui:IsFrameVisible("PostalFrame")
+        )
+      )
+    then
+      return false
+    end
+
+    -- Old Aux right-click is custom auction handling.
+    if
+      _G.IsAddOnLoaded("aux-addon")
+      and _G.AuxVersion
+      and _G.Aux
+      and _G.Aux_ContainerFrameItemButton_OnClick
+      and self.ui:IsFrameVisible("AuctionFrame")
+    then
+      return false
+    end
+
+    -- Blizzard Auction House - Right-click/Alt+click.
+    if self:IsItemClickActionAllowed(mouseButton, "AuctionFrame") then
+      return false
+    end
+
+    -- Trade - Right-click/Alt+click.
+    if self:IsItemClickActionAllowed(mouseButton, "TradeFrame") then
+      return false
+    end
+
+    return not _G.CursorHasItem()
+  end
+
+  --- Configure a secure item-use button for the current bag and slot.
+  ---@param button table
+  ---@param bagNum number?
+  ---@param slotNum number?
+  ---@param mouseButton string?
+  function Inventory:ConfigureSecureItemUseButton(button, bagNum, slotNum, mouseButton)
+    if not button or (_G.InCombatLockdown and _G.InCombatLockdown()) then
+      return
+    end
+
+    local buttonSuffix = (mouseButton == "RightButton" and "2") or "1"
+    local secureItemReference = (
+      type(bagNum) == "number"
+      and type(slotNum) == "number"
+      and tostring(bagNum) .. " " .. tostring(slotNum)
+    ) or nil
+
+    button:SetAttribute("type1", nil)
+    button:SetAttribute("item1", nil)
+    button:SetAttribute("type2", nil)
+    button:SetAttribute("item2", nil)
+
+    if secureItemReference then
+      button:SetAttribute("type" .. buttonSuffix, "item")
+      button:SetAttribute("item" .. buttonSuffix, secureItemReference)
+      if button.bagshuiData then
+        button.bagshuiData.secureItemUseButton = (buttonSuffix == "2" and "RightButton") or "LeftButton"
+      end
+    elseif button.bagshuiData then
+      button.bagshuiData.secureItemUseButton = nil
+    end
+  end
+
+  --- Prepare secure item-use attributes for the current click when Wrath requires them.
+  ---@param mouseButton string
+  ---@param itemButton table?
+  function Inventory:ItemButton_PreClick(mouseButton, itemButton)
+    itemButton = itemButton or _G.this
+    if not itemButton or not itemButton.bagshuiData then
+      return
+    end
+
+    clearSecureItemUse(itemButton)
+
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+      return
+    end
+
+    local buttonInfo = itemButton.bagshuiData
+    local item = self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum]
+    if not self:ShouldUseItemSecurely(item, mouseButton) then
+      return
+    end
+
+    itemButton:SetAttribute("type" .. (mouseButton == "RightButton" and "2" or "1"), "item")
+    itemButton:SetAttribute(
+      "item" .. (mouseButton == "RightButton" and "2" or "1"),
+      tostring(buttonInfo.bagNum) .. " " .. tostring(buttonInfo.slotNum)
+    )
+    buttonInfo.secureItemUseButton = mouseButton
   end
 
   --- ### Now it's time for fun with metatables!
@@ -843,10 +1042,17 @@ Bagshui:AddComponent(function()
   --- Left and right click and all the modifier key combinations.
   ---@param mouseButton string
   ---@param isDrag number|nil|boolean
-  function Inventory:ItemButton_OnClick(mouseButton, isDrag)
-    local itemButton = _G.this
+  function Inventory:ItemButton_OnClick(mouseButton, isDrag, itemButton)
+    itemButton = itemButton or _G.this
 
     local buttonInfo = itemButton.bagshuiData
+    local secureItemUseButton = buttonInfo.secureItemUseButton
+    if secureItemUseButton and not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+      clearSecureItemUse(itemButton)
+    else
+      buttonInfo.secureItemUseButton = nil
+    end
+
     local item = self.inventory[buttonInfo.bagNum][buttonInfo.slotNum]
 
     -- Nothing normal should happen in Edit Mode.
@@ -881,6 +1087,14 @@ Bagshui:AddComponent(function()
       end
     else
       -- Normal processing (non-Edit Mode).
+
+      -- Wrath handled this click through the secure item-use path in PreClick.
+      if secureItemUseButton == mouseButton then
+        self:ClearItemPendingSale(nil, true)
+        self:ItemButton_OnLeave(itemButton)
+        self:ForceUpdateWindow()
+        return
+      end
 
       -- Make sure there's an item of some sort to work with (can be an empty slot representation).
       if item then

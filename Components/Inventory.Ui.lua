@@ -742,24 +742,29 @@ Bagshui:AddComponent(function()
     buttons.toolbar.hearthstone = ui:CreateIconButton({
       name = "Hearthstone",
       parentFrame = footer,
+      template = "SecureActionButtonTemplate",
       anchorPoint = "RIGHT",
       anchorToFrame = frames.money,
       anchorToPoint = "LEFT",
       disable = false,
-      onClick = function()
+      preClick = function(button, mouseButton)
+        self:ConfigureSecureItemUseButton(button, nil, nil)
+        if self.hearthstoneItemRef and Bagshui:GetCursorItem() ~= self.hearthstoneItemRef then
+          self:ConfigureSecureItemUseButton(
+            button,
+            self.hearthstoneItemRef.bagNum,
+            self.hearthstoneItemRef.slotNum,
+            mouseButton
+          )
+        end
+      end,
+      onClick = function(button)
+        self:ConfigureSecureItemUseButton(button, nil, nil)
         if Bagshui:GetCursorItem() == self.hearthstoneItemRef then
           _G.ClearCursor()
           return
         end
-        if self.hearthstoneItemRef then
-          local buttonProxy = buttons.toolbar.hearthstone.bagshuiData.getIdProxy
-          if buttonProxy then
-            local oldGlobalThis = _G.this
-            _G.this = buttonProxy
-            _G.ContainerFrameItemButton_OnClick(buttonProxy, "RightButton")
-            _G.this = oldGlobalThis
-          end
-        else
+        if not self.hearthstoneItemRef then
           Bagshui:ShowAndLogErrorMessage(L.Error_HearthstoneNotFound)
         end
       end,
@@ -778,7 +783,7 @@ Bagshui:AddComponent(function()
         self:ItemButton_OnUpdate(_G.arg1)
       end,
     })
-    -- Make the Hearthstone toolbar button compatible with our `ContainerFrameItemButton_` hackery.
+    -- Keep the Hearthstone toolbar button compatible with our tooltip proxy logic.
     ui:AddItemSlotButtonGetIdProxy(buttons.toolbar.hearthstone)
 
     -- Allow picking up the Hearthstone from the button.
@@ -801,22 +806,26 @@ Bagshui:AddComponent(function()
     buttons.toolbar.clam = ui:CreateIconButton({
       name = "Clam",
       parentFrame = footer,
+      template = "SecureActionButtonTemplate",
       anchorPoint = "RIGHT",
       anchorToFrame = buttons.toolbar.hearthstone,
       anchorToPoint = "LEFT",
       disable = false,
       texture = "Clam",
       tooltipTitle = L.OpenContainer,
-      onClick = function()
+      preClick = function(button, mouseButton)
+        self:ConfigureSecureItemUseButton(button, nil, nil)
         if self.nextOpenableItemBagNum and self.nextOpenableItemSlotNum then
-          local button = self:GetItemSlotButtonByBagSlot(self.nextOpenableItemBagNum, self.nextOpenableItemSlotNum)
-          if button and button.bagshuiData and button.bagshuiData.getIdProxy then
-            local oldGlobalThis = _G.this
-            _G.this = button.bagshuiData.getIdProxy
-            _G.ContainerFrameItemButton_OnClick(button.bagshuiData.getIdProxy, "RightButton")
-            _G.this = oldGlobalThis
-          end
+          self:ConfigureSecureItemUseButton(
+            button,
+            self.nextOpenableItemBagNum,
+            self.nextOpenableItemSlotNum,
+            mouseButton
+          )
         end
+      end,
+      onClick = function(button)
+        self:ConfigureSecureItemUseButton(button, nil, nil)
       end,
       onEnter = function()
         -- Actual work will be handled in OnUpdate.

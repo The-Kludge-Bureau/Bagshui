@@ -215,11 +215,19 @@ Bagshui:AddComponent(function()
     assert(buttonOpts.name, "name property is missing")
     assert(buttonOpts.texture, "texture property is missing")
 
+    local secureClick = (type(buttonOpts.template) == "string" and string.find(
+      buttonOpts.template,
+      "SecureActionButtonTemplate",
+      1,
+      true
+    ))
+
     -- Create button.
     local button = _G.CreateFrame(
       "Button",
       self:CreateElementName((buttonOpts.namePrefix or "button") .. buttonOpts.name),
-      buttonOpts.parentFrame
+      buttonOpts.parentFrame,
+      buttonOpts.template
     )
 
     -- Change frame level.
@@ -308,16 +316,23 @@ Bagshui:AddComponent(function()
     end
 
     -- Set click action.
+    if buttonOpts.preClick and secureClick then
+      local preClick = buttonOpts.preClick
+      button:SetScript("PreClick", function(buttonFrame, mouseButton)
+        preClick(buttonFrame, mouseButton)
+      end)
+    end
+
     if buttonOpts.onClick then
       -- Capture onClick function so table reuse doesn't bite us.
       local onClick = buttonOpts.onClick
       local onClickBeforeCloseMenusAndClearFocuses = buttonOpts.onClickBeforeCloseMenusAndClearFocuses
-      button:SetScript("OnClick", function()
+      button:SetScript(secureClick and "PostClick" or "OnClick", function(buttonFrame, mouseButton)
         if onClickBeforeCloseMenusAndClearFocuses then
-          onClickBeforeCloseMenusAndClearFocuses()
+          onClickBeforeCloseMenusAndClearFocuses(buttonFrame, mouseButton)
         end
         self:CloseMenusAndClearFocuses(true, true, false)
-        onClick()
+        onClick(buttonFrame, mouseButton)
       end)
       -- Shift/unshift HighlightTexture to match pushed/normal texture on mousedown/mouseup.
       button:SetScript("OnMouseDown", function()
