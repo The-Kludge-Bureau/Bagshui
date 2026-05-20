@@ -14,14 +14,18 @@ Bagshui:LoadComponent(function()
   --- [C]: in function `CreateFrame'
   --- ```
   ---@param wowApiFunctionName string Hooked WoW API function that triggered this call.
-  function Bagshui:MoneyFrame_UpdateMoney(wowApiFunctionName)
+  ---@param moneyFrame table? `MoneyFrame_UpdateMoney()` parameter on newer clients.
+  function Bagshui:MoneyFrame_UpdateMoney(wowApiFunctionName, moneyFrame)
+    moneyFrame = moneyFrame or _G.this
+
     -- There doesn't seem to be anything that initializes the `staticMoney` property
     -- of money frames, but this is only a problem sometimes? It's confusing.
     -- Regardless, this prevents the error from happening.
-    if _G.this.moneyType == "STATIC" and _G.this.staticMoney == nil then
-      _G.this.staticMoney = 0
+    if moneyFrame and moneyFrame.moneyType == "STATIC" and moneyFrame.staticMoney == nil then
+      moneyFrame.staticMoney = 0
     end
-    self.hooks:OriginalHook(wowApiFunctionName)
+
+    self.hooks:OriginalHook(wowApiFunctionName, moneyFrame)
   end
 
   --- Ensure the stack split frame stays onscreen.
@@ -48,4 +52,3 @@ Bagshui:LoadComponent(function()
     end
   end
 end)
-

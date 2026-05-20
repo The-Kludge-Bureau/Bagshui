@@ -337,6 +337,10 @@ Bagshui:AddComponent(function()
   ---@param anchorPoint string? Point on the menu which should be attached to `anchorFrame`.
   ---@param anchorToPoint string? Point on `anchorFrame` to which the menu should be attached.
   function Menus:ShowMenu(menuType, anchorFrame, xOffset, yOffset, anchorPoint, anchorToPoint)
+    local function loadMenuCallback(arg1, arg2)
+      self:LoadMenu(menuType, (type(arg1) == "number" and arg1 or arg2))
+    end
+
     -- Used by IsMenuOpen() when checking to see if an open menu is unique to this class instance.
     Bagshui.menuFrame.bagshuiData.lastMenuTypeLoaded = menuType .. tostring(self)
 
@@ -356,9 +360,7 @@ Bagshui:AddComponent(function()
     end
 
     -- Load the menu.
-    _G.UIDropDownMenu_Initialize(Bagshui.menuFrame, function(level)
-      self:LoadMenu(menuType, level)
-    end, "MENU")
+    _G.UIDropDownMenu_Initialize(Bagshui.menuFrame, loadMenuCallback, "MENU")
 
     -- Adjust anchoring if requested.
     if anchorPoint then
@@ -404,6 +406,10 @@ Bagshui:AddComponent(function()
   ---@param menuType string Identifier for a menu that has been registered via `AddMenu()`.
   ---@param level number Menu level, 1-3.
   function Menus:LoadMenu(menuType, level)
+    if type(level) ~= "number" then
+      level = _G.UIDROPDOWNMENU_MENU_LEVEL or 1
+    end
+
     level = level or 1
 
     -- Figure out what menu items to load.
@@ -1242,4 +1248,3 @@ Bagshui:AddComponent(function()
   -- Perform initialization.
   Menus:Init()
 end)
-

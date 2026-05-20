@@ -155,10 +155,12 @@ Bagshui:AddComponent(function()
       local this = dropDownWidget or _G.this
       local originalHeight = this:GetHeight()
 
+      local function loadMenuCallback(arg1, arg2)
+        menusInstance:LoadMenu(menuType, (type(arg1) == "number" and arg1 or arg2))
+      end
+
       -- This would normally be handled by `Menus:OpenMenu()` but we need to set it up directly.
-      _G.UIDropDownMenu_Initialize(this, function(level)
-        menusInstance:LoadMenu(menuType, level)
-      end)
+      _G.UIDropDownMenu_Initialize(this, loadMenuCallback)
 
       -- Clear the selection. Blizzard code won't behave properly unless we do this.
       _G.UIDropDownMenu_SetSelectedID(this, nil, 1)
@@ -706,4 +708,3 @@ bagshuiInfo.noTooltipTextDelay
     )
   end
 end)
-
