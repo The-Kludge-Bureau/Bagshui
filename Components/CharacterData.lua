@@ -189,8 +189,11 @@ Bagshui:AddComponent(function()
       end
     end
     table.sort(self.characterIdList, function(a, b)
-      return tostring(Bagshui.characters[a].info.realm or "") .. " " .. tostring(Bagshui.characters[a].info.name or "")
-        < tostring(Bagshui.characters[b].info.realm or "") .. " " .. tostring(Bagshui.characters[b].info.name or "")
+      local characterAInfo = Bagshui.characters[a].info or {}
+      local characterBInfo = Bagshui.characters[b].info or {}
+
+      return tostring(characterAInfo.realm or "") .. " " .. tostring(characterAInfo.name or "")
+        < tostring(characterBInfo.realm or "") .. " " .. tostring(characterBInfo.name or "")
     end)
     -- Place the current character at the top.
     table.insert(self.characterIdList, 1, Bagshui.currentCharacterId)
@@ -206,4 +209,3 @@ Bagshui:AddComponent(function()
   -- This is done at the end because RegisterEvent expects the class to have an OnEvent function.
   Bagshui:RegisterEvent("BAGSHUI_CHARACTERDATA_UPDATE", CharacterData)
 end)
-

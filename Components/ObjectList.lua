@@ -799,8 +799,10 @@ event == "BAGSHUI_SETTING_UPDATE"
       if self.objectMetatable and getmetatable(object) ~= self.objectMetatable then
         setmetatable(object, self.objectMetatable)
       end
-      local nameTable = object.builtin and self.defaultObjectNames or self.customObjectNames
-      nameTable[object.name] = id
+      if type(object.name) == "string" and string.len(object.name) > 0 then
+        local nameTable = object.builtin and self.defaultObjectNames or self.customObjectNames
+        nameTable[object.name] = id
+      end
     end
   end
 
@@ -1221,4 +1223,3 @@ event == "BAGSHUI_SETTING_UPDATE"
     self.objectManager.objectList = self
   end
 end)
-
