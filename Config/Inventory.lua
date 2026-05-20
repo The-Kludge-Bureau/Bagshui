@@ -49,6 +49,9 @@ Bagshui:AddComponent(function()
         -- Open/close with Mail frame.
         MAIL_SHOW = "Open",
         MAIL_CLOSED = "Close",
+        -- Refresh attachment lock state when Send Mail changes without a bag update.
+        MAIL_SEND_INFO_UPDATE = true,
+        MAIL_UNLOCK_SEND_ITEMS = true,
         -- Open/close with Bank frame.
         BANKFRAME_OPENED = "Open",
         BANKFRAME_CLOSED = "Close",
