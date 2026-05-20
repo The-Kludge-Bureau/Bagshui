@@ -135,18 +135,9 @@ Bagshui:AddComponent(function()
 
       -- Refresh or close menus depending on what was configured.
       if params.menuItem.keepShownOnClick then
-        -- Record the value of the clicked menu item on our hack frame so that UIDropDownMenu_Refresh knows what to do.
-        self.autoSplitMenuRefreshHackFrame.selectedValue = (not params.menuItem.notCheckable) and params.menuItem.value
-          or nil
-        -- Call UIDropDownMenu_Refresh on the next frame to put the check mark back if it was removed.
-        Bagshui:QueueEvent(
-          _G.UIDropDownMenu_Refresh,
-          nil,
-          true,
-          self.autoSplitMenuRefreshHackFrame,
-          nil,
-          _G.UIDROPDOWNMENU_MENU_LEVEL
-        )
+        -- Rebuild the active menu level on the next frame so the checked state is recalculated
+        -- using Bagshui's own menu data instead of relying on Blizzard refresh internals.
+        self:Refresh(_G.UIDROPDOWNMENU_MENU_LEVEL)
       else
         Bagshui:CloseMenus()
       end
