@@ -1,4 +1,4 @@
-﻿-- Bagshui Core
+-- Bagshui Core
 -- Customizable auto-categorizing and sorting all-in-one inventory replacement for Vanilla WoW 1.12.
 -- https://github.com/veechs/Bagshui
 --
@@ -1177,4 +1177,3 @@ end
 -- lua-language-server hack to remove "undefined-field" errors when accessing WoW API via _G.
 ---@class _G
 ---@field [string] any
-
