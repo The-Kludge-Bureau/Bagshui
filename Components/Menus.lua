@@ -367,7 +367,7 @@ Bagshui:AddComponent(function()
       Bagshui.menuFrame.bagshuiData.anchorPoint = anchorPoint
       Bagshui.menuFrame.bagshuiData.anchorToFrame = anchorFrame
       Bagshui.menuFrame.bagshuiData.anchorToPoint = anchorToPoint
-      _G.UIDropDownMenu_SetAnchor(xOffset, yOffset, Bagshui.menuFrame, anchorPoint, anchorFrame, anchorToPoint)
+      _G.UIDropDownMenu_SetAnchor(Bagshui.menuFrame, xOffset, yOffset, anchorPoint, anchorFrame, anchorToPoint)
 
       -- Force ToggleDropDownMenu() to use the points set by UIDropDownMenu_SetAnchor().
       anchorFrame = nil

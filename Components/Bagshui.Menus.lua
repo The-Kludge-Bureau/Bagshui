@@ -69,6 +69,8 @@ Bagshui:LoadComponent(function()
   ---@param anchorName string? Parameter for the original `ToggleDropDownMenu()`.
   ---@param xOffset number? Parameter for the original `ToggleDropDownMenu()`.
   ---@param yOffset number? Parameter for the original `ToggleDropDownMenu()`.
+  ---@param menuList table? Parameter for the original `ToggleDropDownMenu()`.
+  ---@param button table? Parameter for the original `ToggleDropDownMenu()`.
   ---@param bagshuiAdditionalPassReason string? When another pass needs to be made to re-check the menu's position, this extra parameter is added.
   function Bagshui:ToggleDropDownMenu(
     wowApiFunctionName,
@@ -78,9 +80,8 @@ Bagshui:LoadComponent(function()
     anchorName,
     xOffset,
     yOffset,
-    _,
-    _,
-    _,
+    menuList,
+    button,
     bagshuiAdditionalPassReason
   )
     -- Record whether we're in one of the additional passes.
@@ -98,13 +99,23 @@ Bagshui:LoadComponent(function()
     -- Calling on an additional pass can also trigger errors because the meaning of `this` will have
     -- changed, and ToggleDropDownMenu() won't be able to populate its tempFrame variable.
     if phase == 0 then
-      self.hooks:OriginalHook(wowApiFunctionName, level, value, dropDownFrame, anchorName, xOffset, yOffset)
+      self.hooks:OriginalHook(
+        wowApiFunctionName,
+        level,
+        value,
+        dropDownFrame,
+        anchorName,
+        xOffset,
+        yOffset,
+        menuList,
+        button
+      )
       -- At one point there were crashes happening when right-clicking inventory windows to open the menu.
       -- It SEEMS like they were fixed by avoiding touching cursor-anchored menus during the level 1 checks.
       -- If there are still crashing issues reported, this may need to be enabled in lieu of the
       -- immediate call above. (It's not ideal, since there will be a flash of the menu in the wrong position.)
       -- Bagshui:QueueEvent(function()
-      -- 	self:ToggleDropDownMenu(wowApiFunctionName, level, value, dropDownFrame, anchorName, xOffset, yOffset, nil, nil, nil, TOGGLE_DROPDOWN_MENU_FIRST_PASS)
+      -- 	self:ToggleDropDownMenu(wowApiFunctionName, level, value, dropDownFrame, anchorName, xOffset, yOffset, menuList, button, TOGGLE_DROPDOWN_MENU_FIRST_PASS)
       -- end)
       -- return
     end
@@ -176,9 +187,8 @@ Bagshui:LoadComponent(function()
               anchorName,
               xOffset,
               yOffset,
-              nil,
-              nil,
-              nil,
+              menuList,
+              button,
               TOGGLE_DROPDOWN_MENU_LEVEL_1_RECHECK
             )
           end)
@@ -290,9 +300,8 @@ Bagshui:LoadComponent(function()
           anchorName,
           xOffset,
           yOffset,
-          nil,
-          nil,
-          nil,
+          menuList,
+          button,
           TOGGLE_DROPDOWN_MENU_SECOND_PASS
         )
       end)
@@ -442,4 +451,3 @@ Bagshui:LoadComponent(function()
     end
   end
 end)
-
