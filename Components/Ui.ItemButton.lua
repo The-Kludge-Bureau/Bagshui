@@ -180,7 +180,7 @@ Bagshui:LoadComponent(function()
   ---@param button table Parent frame.
   ---@return table cooldown
   function Ui:CreateItemButtonCooldown(button, disableText)
-    local cooldown = _G.CreateFrame("Model", button:GetName() .. "Cooldown", button, "CooldownFrameTemplate")
+    local cooldown = _G.CreateFrame("Cooldown", button:GetName() .. "Cooldown", button, "CooldownFrameTemplate")
     cooldown:SetFrameLevel(cooldown:GetFrameLevel() + 1) -- Move above NormalTexture.
     -- Pretend we're a pfUI frame so we can get pfUI cooldown text without the
     -- "Foreign Frames" option (so long as the pfUI cooldown module is enabled).
