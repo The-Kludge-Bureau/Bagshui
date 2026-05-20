@@ -181,7 +181,11 @@ _G.CursorHasItem()
       if callPickupContainerItem then
         _G.PickupContainerItem(item.bagNum, item.slotNum)
       else
-        _G.ContainerFrameItemButton_OnClick(_G.this, "LeftButton")
+        if _G.IsModifiedClick and _G.IsModifiedClick() then
+          _G.ContainerFrameItemButton_OnModifiedClick(_G.this, "LeftButton")
+        else
+          _G.ContainerFrameItemButton_OnClick(_G.this, "LeftButton")
+        end
       end
     end
 
