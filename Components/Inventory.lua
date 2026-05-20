@@ -312,6 +312,8 @@ Bagshui:AddComponent(function()
       myContainerIds = {},
       ---@type table<number, number> `{ <InventoryId> = <ContainerId> }`
       inventoryIdsToContainerIds = {},
+      ---@type table<number, number> `{ <ContainerId> = <Inventory Slot Id> }` for equippable containers.
+      containerIdsToInventorySlots = {},
       ---@type table<string, table> `{ <Container Type> = { available = <used slots>, total = <total slots> } }` -- Managed by UpdateBagBar().
       containerSpace = {},
 
@@ -481,13 +483,27 @@ Bagshui:AddComponent(function()
     classObj.inventoryTypeSavedVars = BsUtil.LowercaseFirstLetter(classObj.inventoryType)
     classObj.inventoryTypeLocalized = L[classObj.inventoryType]
 
-    -- Build the list of containerIds belonging to this class along with the reverse inventory ID (slot) mapping.
+    -- Build the list of containerIds belonging to this class along with inventory-slot mappings
+    -- for equippable containers.
     for index = 1, table.getn(classObj.containerIds) do
       local containerId = classObj.containerIds[index]
       classObj.myContainerIds[containerId] = index
       -- Starting inventory ID mapping at index 2 because primary containers are never inventory slots into which bags can be equipped.
       if index > 1 then
-        classObj.inventoryIdsToContainerIds[_G.ContainerIDToInventoryID(containerId)] = containerId
+        local inventorySlotId = nil
+
+        if classObj.getInventorySlotFunction then
+          inventorySlotId = classObj.getInventorySlotFunction(containerId, 1)
+        elseif classObj.inventorySlotFormat then
+          inventorySlotId = _G.GetInventorySlotInfo(
+            string.format(classObj.inventorySlotFormat, (containerId + classObj.bagSlotNameNumberOffset))
+          )
+        end
+
+        if inventorySlotId then
+          classObj.containerIdsToInventorySlots[containerId] = inventorySlotId
+          classObj.inventoryIdsToContainerIds[inventorySlotId] = containerId
+        end
       end
     end
 
@@ -1011,4 +1027,3 @@ Bagshui:AddComponent(function()
     self:CallInventoryClassFunctionForAll("Restack")
   end
 end)
-

@@ -393,7 +393,7 @@ Bagshui:AddComponent(function()
       _G.PickupContainerItem(target.bagNum, target.slotNum)
     elseif type(target) == "number" then
       -- This is an item being equipped to a slot.
-      _G.EquipCursorItem(_G.ContainerIDToInventoryID(target))
+      _G.EquipCursorItem(self.containerIdsToInventorySlots[target])
       -- Might be BOE, so pass callback responsibilities over.
       -- (Could check for BOE but there's really no reason to do so when
       -- WaitForStaticPopupClose() will just invoke the callback immediately
@@ -777,7 +777,11 @@ Bagshui:AddComponent(function()
 
       -- Find the slot into which it should be put.
       for _, containerId in ipairs(self.containerIds) do
-        if _G.IsInventoryItemLocked(_G.ContainerIDToInventoryID(containerId)) then
+        if
+          containerId ~= self.primaryContainer.id
+          and self.containerIdsToInventorySlots[containerId]
+          and _G.IsInventoryItemLocked(self.containerIdsToInventorySlots[containerId])
+        then
           bagSlot = containerId
         end
       end
@@ -793,4 +797,3 @@ Bagshui:AddComponent(function()
     self.hooks:OriginalHook(wowApiFunctionName, event, message)
   end
 end)
-

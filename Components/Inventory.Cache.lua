@@ -113,7 +113,9 @@ Bagshui:AddComponent(function()
         bagType = self.primaryContainer.name
       else
         bagName = _G.GetBagName(bagNum)
-        bagSlotLink = _G.GetInventoryItemLink("player", _G.ContainerIDToInventoryID(bagNum))
+        bagSlotLink = self.containerIdsToInventorySlots[bagNum]
+          and _G.GetInventoryItemLink("player", self.containerIdsToInventorySlots[bagNum])
+          or nil
         if bagSlotLink ~= nil then
           _, _, bagItemCode = string.find(bagSlotLink, "(%d+):")
           _, _, _, _, _, bagType, _, _, bagTexture = _G.GetItemInfo(bagItemCode)
@@ -121,7 +123,11 @@ Bagshui:AddComponent(function()
       end
 
       -- Keep track of whether this bag got locked to help coordinate bag change updates after it's unlocked.
-      self.lastUpdateLockedContainers[bagNum] = _G.IsInventoryItemLocked(_G.ContainerIDToInventoryID(bagNum))
+      if bagNum ~= self.primaryContainer.id and self.containerIdsToInventorySlots[bagNum] then
+        self.lastUpdateLockedContainers[bagNum] = _G.IsInventoryItemLocked(self.containerIdsToInventorySlots[bagNum])
+      else
+        self.lastUpdateLockedContainers[bagNum] = false
+      end
 
       -- No reason to store full texture paths since they're always in Interface\Icons.
       bagTexture = bagTexture
@@ -582,4 +588,3 @@ item._proposedStockState ~= BS_ITEM_STOCK_STATE.DOWN
     BsItemInfo:InitializeEmptySlotItem(self.emptySlotStacks[bagInfo.genericType], true)
   end
 end)
-

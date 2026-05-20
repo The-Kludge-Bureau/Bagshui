@@ -20,9 +20,10 @@ Bagshui:AddComponent(function()
       containerIdRange = { 1, _G.NUM_BAG_SLOTS },
       -- XML template for bag buttons.
       bagButtonTemplate = "BagshuiBagsContainerTemplate",
-      -- Bag button inventory IDs are all offset by the same amount, starting
-      -- with the Backpack.
-      bagButtonIdOffset = _G.ContainerIDToInventoryID(0),
+      -- Bag button inventory IDs are all offset by the same amount.
+      -- On WotLK, ContainerIDToInventoryID(0) errors for the backpack, so derive
+      -- the offset from the first equipped bag slot instead.
+      bagButtonIdOffset = (_G.GetInventorySlotInfo("BAG0SLOT") - 1),
       -- PaperDollItemSlotButton code wants "Bag#Slot" when parsing the element's
       -- name with `strsub(<name>, 10)`.
       bagSlotNameFormat = "BgshiBagsBag%dSlot",
@@ -106,9 +107,9 @@ Bagshui:AddComponent(function()
       -- Inventory class will handle that automatically.
       initialItemSlotButtons = 144,
 
-      -- Append bags 5 through 10 to containerIds array when it is built at
-      -- the end of this file.
-      containerIdRange = { 5, 10 },
+      -- Append bank bag containers after the primary bank container. WotLK
+      -- still uses bag IDs 5 through 5 + NUM_BANKBAGSLOTS - 1.
+      containerIdRange = { 5, 4 + _G.NUM_BANKBAGSLOTS },
       -- XML template for bag buttons.
       bagButtonTemplate = "BankItemButtonBagTemplate",
       -- Bank bag button IDs match their bag numbers.
@@ -221,4 +222,3 @@ Bagshui:AddComponent(function()
     end
   end
 end)
-
