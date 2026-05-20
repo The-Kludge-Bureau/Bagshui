@@ -240,11 +240,18 @@ Bagshui:AddComponent(function()
     end
 
     --- Cast the configured spell on a button.
-    local function inventory_SpellButton_OnClick()
+    ---@param button table?
+    local function inventory_SpellButton_OnClick(button)
+      button = button or _G.this
       if inventory_SpellButton_NoSpell() then
         return
       end
-      _G.CastSpell(BsCharacter.spellNamesToIds[_G.this.bagshuiData.spellName], _G.BOOKTYPE_SPELL)
+
+      -- Restore the persistent secure spell binding after the click.
+      if button and button.bagshuiData and button.bagshuiData.spellName and not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+        button:SetAttribute("type1", "spell")
+        button:SetAttribute("spell1", button.bagshuiData.spellName)
+      end
     end
 
     --- Show the spell tooltip associated with a button.
@@ -869,6 +876,7 @@ Bagshui:AddComponent(function()
     buttons.toolbar.disenchant = ui:CreateIconButton({
       name = "Disenchant",
       parentFrame = footer,
+      template = "SecureActionButtonTemplate",
       anchorPoint = "RIGHT",
       anchorToFrame = buttons.toolbar.clam,
       anchorToPoint = "LEFT",
@@ -880,11 +888,14 @@ Bagshui:AddComponent(function()
       onUpdate = inventory_SpellButton_OnUpdate,
     })
     buttons.toolbar.disenchant.bagshuiData.spellName = L.Spell_Disenchant
+    buttons.toolbar.disenchant:SetAttribute("type1", "spell")
+    buttons.toolbar.disenchant:SetAttribute("spell1", L.Spell_Disenchant)
 
     -- Pick Lock button.
     buttons.toolbar.pickLock = ui:CreateIconButton({
       name = "PickLock",
       parentFrame = footer,
+      template = "SecureActionButtonTemplate",
       anchorPoint = "RIGHT",
       anchorToFrame = buttons.toolbar.disenchant,
       anchorToPoint = "LEFT",
@@ -896,6 +907,8 @@ Bagshui:AddComponent(function()
       onUpdate = inventory_SpellButton_OnUpdate,
     })
     buttons.toolbar.pickLock.bagshuiData.spellName = L.Spell_PickLock
+    buttons.toolbar.pickLock:SetAttribute("type1", "spell")
+    buttons.toolbar.pickLock:SetAttribute("spell1", L.Spell_PickLock)
 
     -- Bottom right toolbar order, consumed by `Inventory:UpdateToolbarAnchoring()`
     -- to manage anchoring based on what is visible.

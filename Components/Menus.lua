@@ -120,9 +120,10 @@ Bagshui:AddComponent(function()
     --- Auto-split menu OnClick function.
     --- Having a reusable function avoids generating hundreds of anonymous functions as we construct the menu tables.
     --- This is stored on the prototype because it needs to be available to `PopulateAutoSplitMenuItems()`.
+    ---@param dropdownButton table Dropdown button passed by Wrath's menu callback.
     ---@param params any arg1 from the menu `func()` call, set by `PrepareAutoSplitMenu()`.
     ---@param itemId any arg2 from the menu `func()` call, set by `PrepareAutoSplitMenu()`.
-    self._autoSplitMenuItem_Click = function(params, itemId)
+    self._autoSplitMenuItem_Click = function(dropdownButton, params, itemId)
       -- Safeguard.
       if not params then
         return
@@ -134,7 +135,7 @@ Bagshui:AddComponent(function()
       end
 
       -- Refresh or close menus depending on what was configured.
-      if params.menuItem.keepShownOnClick then
+      if (params.menuItem and params.menuItem.keepShownOnClick) or (dropdownButton and dropdownButton.keepShownOnClick) then
         -- Rebuild the active menu level on the next frame so the checked state is recalculated
         -- using Bagshui's own menu data instead of relying on Blizzard refresh internals.
         self:Refresh(_G.UIDROPDOWNMENU_MENU_LEVEL)
