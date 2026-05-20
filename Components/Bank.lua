@@ -75,10 +75,10 @@ Bagshui:AddComponent(function()
     -- OnEnter, if the slot is the next purchasable one, add the cost to the
     -- tooltip and change to the buy cursor.
     local oldOnEnter = bagSlotButton:GetScript("OnEnter")
-    bagSlotButton:SetScript("OnEnter", function()
-      local this = _G.this
+    bagSlotButton:SetScript("OnEnter", function(bagButton, motion)
+      local this = bagButton or _G.this
       if oldOnEnter then
-        oldOnEnter()
+        oldOnEnter(this, motion)
       end
 
       -- Can't buy bank slots offline.
@@ -99,8 +99,8 @@ Bagshui:AddComponent(function()
 
     -- OnClick, make the purchase if it's the next purchasable slot.
     local oldOnClick = bagSlotButton:GetScript("OnClick")
-    bagSlotButton:SetScript("OnClick", function()
-      local this = _G.this
+    bagSlotButton:SetScript("OnClick", function(bagButton, mouseButton)
+      local this = bagButton or _G.this
       if not self.online then
         return
       end
@@ -117,9 +117,9 @@ Bagshui:AddComponent(function()
         -- Hack to get a call to PickupBagFromSlot().
         -- Without this, Bank bags can only be picked up by dragging.
         -- Another possibility is using `_G.BankFrameItemButtonBag_OnShiftClick()`.
-        this:GetScript("OnDragStart")()
+        this:GetScript("OnDragStart")(this, mouseButton)
       else
-        oldOnClick()
+        oldOnClick(this, mouseButton)
       end
     end)
 
@@ -261,4 +261,3 @@ Bagshui:AddComponent(function()
     self.atBank = false
   end
 end)
-

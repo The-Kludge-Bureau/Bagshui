@@ -250,8 +250,8 @@ Bagshui:AddComponent(function()
       -- - Block default functions if offline.
       -- - Handle placing items in primary containers.
       local oldOnClick = bagSlotButton:GetScript("OnClick")
-      bagSlotButton:SetScript("OnClick", function()
-        local this = _G.this
+      bagSlotButton:SetScript("OnClick", function(bagButton, mouseButton)
+        local this = bagButton or _G.this
         local bagNum = this.bagshuiData.bagNum
 
         local hasBag = inventory:BagSlotButtonHasBag(this)
@@ -369,7 +369,7 @@ Bagshui:AddComponent(function()
             _G.OutfitterQuickSlots:Show()
           end
 
-          oldOnClick()
+          oldOnClick(this, mouseButton)
 
           -- Undo the Outfitter workaround.
           if outfitterQuickSlotsOldParent then
@@ -387,13 +387,14 @@ Bagshui:AddComponent(function()
 
       -- OnDragStart -- just use the original OnDragStart, but block it when offline or in Edit Mode.
       local oldOnDragStart = bagSlotButton:GetScript("OnDragStart")
-      bagSlotButton:SetScript("OnDragStart", function()
+      bagSlotButton:SetScript("OnDragStart", function(bagButton, mouseButton)
+        local this = bagButton or _G.this
         if not inventory.online or inventory.editMode then
           return
         end
 
         if oldOnDragStart then
-          oldOnDragStart()
+          oldOnDragStart(this, mouseButton)
         end
       end)
 
@@ -622,4 +623,3 @@ Bagshui:AddComponent(function()
     return text
   end
 end)
-

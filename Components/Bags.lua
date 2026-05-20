@@ -54,15 +54,16 @@ Bagshui:AddComponent(function()
     --- from being called, since since PaperDollItemSlotButton will interpret that as trying to *equip*
     --- the item in that slot, instead of trying to put it in the bag. Note that due to the behavior of
     --- `PutItemInBag()`, this will *not* intercept bags, but that's handled in the bag slot button's OnClick.
-    bagSlotButton:SetScript("OnClick", function()
+    bagSlotButton:SetScript("OnClick", function(bagButton, mouseButton)
+      local this = bagButton or _G.this
       if
         -- Pass through to the default Bagshui OnClick for bags
         -- so native bag swapping can be invoked.
         (_G.CursorHasItem() and BsItemInfo:IsContainer(Bagshui.cursorItem))
         -- Otherwise, allow PutItemInBag() to catch cursor items and move them.
-        or not _G.PutItemInBag(_G.this.bagshuiData.inventorySlotId)
+        or not _G.PutItemInBag(this.bagshuiData.inventorySlotId)
       then
-        oldOnClick()
+        oldOnClick(this, mouseButton)
       end
     end)
   end
@@ -159,4 +160,3 @@ Bagshui:AddComponent(function()
     self.lastOpenEventTrigger = nil
   end
 end)
-
