@@ -11,8 +11,6 @@
 </picture><br>
 <a href="https://github.com/veechs/Bagshui/wiki/Screenshots">More Screenshots</a></h4>
 
-<a href="https://www.buymeacoffee.com/veechs" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="41" width="146"></a>
-
 ## Features
 
 - Single window inventory for Bags, Bank, and Keyring.
@@ -34,7 +32,7 @@
 
 <summary>Recommended if you like…</summary>
 
-> AdiBags, ArkInventory, Baganator, Baggins, BetterBags, EngInventory/EngBags, TBag.
+> AdiBags, ArkInventory, Baganator, Baggins, BetterBags, EngInventory/EngBags, TBag. \
 > And with “[OneBagshui](https://github.com/veechs/Bagshui/wiki/FAQ#how-do-i-switch-to-the-onebag-style-layout)”: Bagnon, Combuctor, Inventorian, LiteBag, OneBag3, SUCC-bag.
 
 </details>
@@ -60,7 +58,7 @@ Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
 2. Extract the zip file.
 3. Ensure the resulting folder is named `Bagshui` and rename if needed.
 4. Move that folder to `[Path\To\WoW]\Interface\Addons`.
-5. Ensure the structure is `Interface\Addons\Bagshui\Bagshui.toc`.
+5. Ensure the structure is `Interface\Addons\Bagshui\Bagshui.toc`. \
    <sup>_These are all **wrong**:_
    × `Bagshui\Bagshui\Bagshui.toc`
    × `Bagshui-main\Bagshui.toc`
@@ -115,7 +113,7 @@ Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
 </td>
 <td>
 
-- [pfUI](https://shagu.org/pfUI/) skin
+- [pfUI](https://shagu.org/pfUI/) skin \
   <sup>Manage in **pfUI Config** (`/pfui`) > **Components** > **Skins**</sup>
 
 </td>
@@ -138,20 +136,17 @@ Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
 <tr>
 <td>
 
-### Turtle WoW
+### Guild Bank
 
 </td>
 <td>
 
 - **Guild Bank** right-click to deposit.
-- [`Transmog()`](https://github.com/veechs/Bagshui/wiki/Rules#available-rule-functions) collection queries.<br><sup>Requires [Tmog](https://github.com/Otari98/Tmog) and [Bagshui-Tmog](https://github.com/veechs/Bagshui-Tmog).
 
 </td>
 </tr>
 
 </table>
-
-<sup>If installed, [SuperWoW](https://github.com/balakethelock/SuperWoW) provides charge counts (the `×#` overlay for multi-use items) slightly more efficiently. This is pretty minor since you'll have the functionality regardless.</sup>
 
 ### Languages
 
@@ -161,11 +156,6 @@ If Bagshui has not been localized for your client, many items will not be correc
 - Chinese (zhCN)
 
 [^1]: In Vanilla, a _lot_ of item identification must be done either by parsing tooltips or hardcoding item IDs. Bagshui leans toward the former, and therefore is highly dependent on localization.
-
-## Donations
-
-Developing Bagshui is fun, but also a lot of work! Your support is hugely appreciated.
-<a href="https://www.buymeacoffee.com/veechs" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="41" width="146"></a>
 
 ## Credits
 
