@@ -1,4 +1,4 @@
-## Interface: 11200
+## Interface: 30300
 ## Title: Bagshui
 ## Notes: |cffdb4e97Feng shui for your bags|r|nAll-in-one autosorting inventory replacement
 ## Title-zhCN:|CFF00FF00[|r|CFFDD66DD界面|r|CFF00FF00] 乾坤袋
@@ -7,5 +7,7 @@
 ## Version: 1.5.16
 ## OptionalDeps: AtlasLoot, ItemRack, Outfitter, pfUI
 ## SavedVariables: BagshuiData
+
+WotlkGlobals.lua
 
 Bagshui.xml
