@@ -626,7 +626,8 @@ Bagshui:AddComponent(function()
     if not characterId or not Bagshui.characters[characterId] then
       return
     end
-    local characterInfo = Bagshui.characters[characterId].info
+    local characterInfo = Bagshui.characters[characterId].info or {}
+
     return
       -- Class color.
       (
@@ -637,7 +638,7 @@ Bagshui:AddComponent(function()
         or NORMAL_FONT_COLOR_CODE
       )
         -- Name.
-        .. characterInfo.name
+        .. tostring(characterInfo.name or characterId)
         -- End class color.
         .. FONT_COLOR_CODE_CLOSE
         .. " "
@@ -650,7 +651,7 @@ Bagshui:AddComponent(function()
         -- End faction color.
         .. FONT_COLOR_CODE_CLOSE
         -- Realm.
-        .. (includeRealm and GRAY_FONT_COLOR_CODE .. " • " .. characterInfo.realm .. FONT_COLOR_CODE_CLOSE or "")
+        .. (includeRealm and GRAY_FONT_COLOR_CODE .. " • " .. tostring(characterInfo.realm or "") .. FONT_COLOR_CODE_CLOSE or "")
   end
 
   -- Class event registration.
@@ -679,4 +680,3 @@ Bagshui:AddComponent(function()
     end
   end
 end)
-

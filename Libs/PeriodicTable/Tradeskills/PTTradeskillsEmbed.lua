@@ -147,9 +147,9 @@ function lib:GetRecepieUse(itemid)
   end
 
   local retval
-  for trade, data in self.tradedata do
-    for recid, recdata in data do
-      for id, num in recdata.ing do
+  for trade, data in pairs(self.tradedata) do
+    for recid, recdata in pairs(data) do
+      for id, num in pairs(recdata.ing) do
         if id == itemid then
           if not retval then
             retval = self.compost and self.compost:Acquire() or {}
@@ -171,8 +171,8 @@ function lib:TradeUsesItem(trade, itemid)
     return
   end
 
-  for recid, recdata in self.tradedata[trade] do
-    for id, num in recdata.ing do
+  for recid, recdata in pairs(self.tradedata[trade]) do
+    for id, num in pairs(recdata.ing) do
       if id == itemid then
         return true
       end
@@ -183,7 +183,7 @@ end
 -- Returns a list of tradeskills the player know which can use the itemid, or nil if none
 function lib:TradesUseItem(itemid)
   local retval
-  for trade, data in self.tradedata do
+  for trade, data in pairs(self.tradedata) do
     if self:TradeUsesItem(trade, itemid) then
       if not retval then
         retval = self.compost and self.compost:Acquire() or {}

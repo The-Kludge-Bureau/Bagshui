@@ -221,13 +221,13 @@ end
 
 function lib:FindWorldDrops()
   local t, retval = {}, {}
-  for _, set in self.k["Instance Loot"].instancezones do
+  for _, set in pairs(self.k["Instance Loot"].instancezones) do
     t = self:MergeSetToTable(t, set)
   end
-  for _, set in self.k["Raid Loot"].raidzones do
+  for _, set in pairs(self.k["Raid Loot"].raidzones) do
     t = self:MergeSetToTable(t, set)
   end
-  for item, val in t do
+  for item, val in pairs(t) do
     if val > 1 then
       retval[item] = val
     end
@@ -238,7 +238,7 @@ end
 function lib:MergeSetToTable(table, set)
   local t = self:GetSetTable(set)
   if t then
-    for item, val in t do
+    for item, val in pairs(t) do
       if table[item] then
         table[item] = table[item] + 1
       else
@@ -251,16 +251,16 @@ end
 
 function lib:RemoveAllWorldDrops()
   local retval = { instancezones = {}, raidzones = {}, instancebosses = {}, raidbosses = {} }
-  for _, set in self.k["Instance Loot"].instancezones do
+  for _, set in pairs(self.k["Instance Loot"].instancezones) do
     retval.instancezones[set] = self:RemoveWorldDrops(set)
   end
-  for _, set in self.k["Raid Loot"].raidzones do
+  for _, set in pairs(self.k["Raid Loot"].raidzones) do
     retval.raidzones[set] = self:RemoveWorldDrops(set)
   end
-  for _, set in self.k["Instance Loot"].instancebosses do
+  for _, set in pairs(self.k["Instance Loot"].instancebosses) do
     retval.instancebosses[set] = self:RemoveWorldDrops(set)
   end
-  for _, set in self.k["Raid Loot"].raidbosses do
+  for _, set in pairs(self.k["Raid Loot"].raidbosses) do
     retval.raidbosses[set] = self:RemoveWorldDrops(set)
   end
   return retval
@@ -270,7 +270,7 @@ function lib:RemoveWorldDrops(set)
   local t = self:GetSetTable(set)
   if t then
     local retval = ""
-    for item, val in t do
+    for item, val in pairs(t) do
       if not self:ItemInSet(item, { "worlddrops", "bossdrops", "NOTworlddrops" }) then
         local v = item .. (val > 0 and (":" .. val) or "")
         if retval == "" then
@@ -326,7 +326,7 @@ function lib:ItemInSet(item, set)
         return t[item], set, set
       end
     elseif type(rset) == "table" then
-      for _, s in rset do
+      for _, s in pairs(rset) do
         local retval, _, atom = self:ItemInSet(item, s)
         if retval then
           return retval, s, atom
@@ -486,9 +486,9 @@ function lib:Benchmark()
   collectgarbage()
 
   local loadsize, tt, tmem = 0, GetTime(), gcinfo()
-  for i, vals in self.k do
+  for i, vals in pairs(self.k) do
     local t, mem = GetTime(), gcinfo()
-    for j, v in vals do
+    for j, v in pairs(vals) do
       if type(v) == "string" then
         self:CacheSet(j)
       end

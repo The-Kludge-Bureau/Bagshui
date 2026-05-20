@@ -2269,7 +2269,7 @@ self.dockedInventory and self.dockedInventory.multiplePartialStacks
   --- where we manually hide tooltips and need to make them reappear when something is put back down.
   function Inventory:ItemSlotAndGroupMouseOverCheck()
     local mouseOverFound = false
-    for _, button in self.ui.buttons.itemSlots do
+    for _, button in ipairs(self.ui.buttons.itemSlots) do
       -- The IsVisible() check is needed because item slot frames that are hidden will still return true for MouseIsOver().
       if _G.MouseIsOver(button) and button:IsVisible() then
         self:ItemButton_OnEnter(button)
@@ -2278,7 +2278,7 @@ self.dockedInventory and self.dockedInventory.multiplePartialStacks
       end
     end
     if self.editMode and not mouseOverFound then
-      for _, group in self.ui.frames.groups do
+      for _, group in ipairs(self.ui.frames.groups) do
         if _G.MouseIsOver(group) and group:IsVisible() then
           self:Group_OnEnter(group)
         end
@@ -2324,4 +2324,3 @@ self.dockedInventory and self.dockedInventory.multiplePartialStacks
     end
   end
 end)
-

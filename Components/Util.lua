@@ -46,7 +46,7 @@ Bagshui:LoadComponent(function()
 
     str = string.gsub(str, delimiter, "\1")
 
-    for match in string.gfind(str, "([^\1]" .. (includeEmpty and "*" or "+") .. ")") do
+    for match in string.gmatch(str, "([^\1]" .. (includeEmpty and "*" or "+") .. ")") do
       table.insert(split_ReturnTable, match)
     end
 
@@ -1231,4 +1231,3 @@ Bagshui:LoadComponent(function()
 
   --#endregion Misc
 end)
-
