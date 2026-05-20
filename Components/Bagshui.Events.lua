@@ -92,6 +92,10 @@ Bagshui:LoadComponent(
     ---@param arg3 any? Parameter for `Bagshui:QueueEvent()`.
     ---@param arg4 any? Parameter for `Bagshui:QueueEvent()`.
     function Bagshui:QueueClassCallback(classInstance, classFunction, delaySeconds, noReset, arg1, arg2, arg3, arg4)
+      if type(classFunction) ~= "function" then
+        return
+      end
+
       -- Create a unique identifier for this event since it's not a predefined event string.
       local eventId = tostring(classInstance) .. ":" .. tostring(classFunction)
       if self:QueueEvent(eventId, delaySeconds, noReset, arg1, arg2, arg3, arg4) then
@@ -157,7 +161,12 @@ Bagshui:LoadComponent(
     ---@return string? errorMessage Error message returned from the event call, if any, when `returnStatus` is true.
     function Bagshui:RaiseEvent(event, returnStatus, arg1, arg2, arg3, arg4)
       if self.queuedEvents.class[event] then
-        assert(self.queuedEvents.classFunction[event], "Class does not have the provided function!")
+        if type(self.queuedEvents.classFunction[event]) ~= "function" then
+          if returnStatus then
+            return false, "Class does not have the provided function!"
+          end
+          return
+        end
         -- Call `<ClassInstance>:<Function>()` by calling `<ClassInstance>.<Function>(<ClassInstance>)`.
         raiseEvent_success, raiseEvent_errorMessage =
           pcall(self.queuedEvents.classFunction[event], self.queuedEvents.class[event], arg1, arg2, arg3, arg4)
@@ -178,4 +187,3 @@ Bagshui:LoadComponent(
   -- Event to raise. This will trigger Bagshui:Init().
   "BAGSHUI_CORE_EVENT_FUNCTIONS_LOADED"
 )
-
