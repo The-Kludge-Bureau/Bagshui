@@ -1,5 +1,12 @@
 # Bagshui Changelog
 
+## 2.0.1 - 2026-05-20
+
+### Fixed
+
+- Defer Bagshui inventory window hides that originate from Blizzard's secure panel-management path so opening fullscreen panels like the world map no longer triggers `ADDON_ACTION_BLOCKED` errors.
+- Restore merchant sell shortcuts under Wrath's secure item handling so `Ctrl+Right-Click` confirms protected sales and `Ctrl+Alt+Shift+Right-Click` bypasses the confirmation as intended.
+
 ## 2.0.0 - 2026-05-20
 
 ### Changed
