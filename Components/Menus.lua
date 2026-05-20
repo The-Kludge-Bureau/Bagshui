@@ -139,7 +139,14 @@ Bagshui:AddComponent(function()
         self.autoSplitMenuRefreshHackFrame.selectedValue = (not params.menuItem.notCheckable) and params.menuItem.value
           or nil
         -- Call UIDropDownMenu_Refresh on the next frame to put the check mark back if it was removed.
-        Bagshui:QueueEvent(_G.UIDropDownMenu_Refresh, nil, true, self.autoSplitMenuRefreshHackFrame)
+        Bagshui:QueueEvent(
+          _G.UIDropDownMenu_Refresh,
+          nil,
+          true,
+          self.autoSplitMenuRefreshHackFrame,
+          nil,
+          _G.UIDROPDOWNMENU_MENU_LEVEL
+        )
       else
         Bagshui:CloseMenus()
       end
