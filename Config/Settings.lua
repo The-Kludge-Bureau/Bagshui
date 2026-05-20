@@ -334,7 +334,8 @@ Bagshui:AddComponent(function()
 
   for quality = 1, 10 do
     local qualityDescription = _G["ITEM_QUALITY" .. quality .. "_DESC"]
-    if not qualityDescription then
+    local qualityColor = _G.ITEM_QUALITY_COLORS[quality]
+    if not qualityDescription or not qualityColor then
       break
     end
     table.insert(sellProtectionQualityChoices, 1, {
@@ -342,9 +343,9 @@ Bagshui:AddComponent(function()
       text = qualityDescription,
       tooltipTitle = string.format(L.sellProtectionQualityThreshold_Choice_TooltipTitle, qualityDescription),
       tooltipText = string.format(L.sellProtectionQualityThreshold_Choice_TooltipText, qualityDescription),
-      textR = _G.ITEM_QUALITY_COLORS[quality].r,
-      textG = _G.ITEM_QUALITY_COLORS[quality].g,
-      textB = _G.ITEM_QUALITY_COLORS[quality].b,
+      textR = qualityColor.r,
+      textG = qualityColor.g,
+      textB = qualityColor.b,
     })
   end
 
@@ -1483,4 +1484,3 @@ Bagshui:AddComponent(function()
     },
   }
 end)
-
