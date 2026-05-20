@@ -1,6 +1,6 @@
 -- Bagshui Core
 -- Customizable auto-categorizing and sorting all-in-one inventory replacement for Vanilla WoW 1.12.
--- https://github.com/veechs/Bagshui
+-- https://github.com/The-Kludge-Bureau/Bagshui
 --
 -- Most code is split into file in Components; what's here is close to the minimum to get things bootstrapped.
 --
@@ -29,9 +29,9 @@ local bagshuiEnvironment = {
   BS_EXPORT_VERSION = 1,
 
   -- Bagshui homepage.
-  BS_URL = "github.com/veechs/Bagshui",
+  BS_URL = "https://github.com/The-Kludge-Bureau/Bagshui",
   -- Bagshui wiki root. MUST end in a slash.
-  BS_WIKI_URL = "github.com/veechs/Bagshui/wiki/",
+  BS_WIKI_URL = "https://github.com/veechs/Bagshui/wiki/",
   -- Bagshui wiki pages. Need to be concatenated onto `BS_WIKI_URL`.
   BS_WIKI_PAGES = {
     EditMode = "Edit-Mode",
