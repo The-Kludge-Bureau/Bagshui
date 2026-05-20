@@ -797,16 +797,22 @@ Bagshui:AddComponent(function()
             -- Only show more in-depth info when Alt is held, even if showInfoTooltipsWithoutAlt is on.
             if _G.IsAltKeyDown() then
               -- Active quest info.
-              if Bagshui.activeQuestItems[item.name] then
+              local activeQuestItem = Bagshui.activeQuestItems[item.name]
+              if activeQuestItem then
                 if BsInfoTooltip:NumLines() > 0 then
                   self:AddBagshuiInfoTooltipLine(" ")
                 end
-                self:AddBagshuiInfoTooltipLine(
-                  tostring(Bagshui.activeQuestItems[item.name].obtained or "?")
-                    .. "/"
-                    .. tostring(Bagshui.activeQuestItems[item.name].needed or "?"),
-                  string.format(L.Symbol_Colon, L.ItemPropFriendly_activeQuest)
-                )
+                if activeQuestItem.specialItem then
+                  self:AddBagshuiInfoTooltipLine(
+                    activeQuestItem.questName or "?",
+                    string.format(L.Symbol_Colon, L.ItemPropFriendly_activeQuest)
+                  )
+                else
+                  self:AddBagshuiInfoTooltipLine(
+                    tostring(activeQuestItem.obtained or "?") .. "/" .. tostring(activeQuestItem.needed or "?"),
+                    string.format(L.Symbol_Colon, L.ItemPropFriendly_activeQuest)
+                  )
+                end
               end
 
               -- Stock state.

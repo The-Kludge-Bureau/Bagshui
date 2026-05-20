@@ -5,6 +5,7 @@
 -- Contains code based on QuestItem: https://github.com/wow-vanilla-addons/QuestItem/blob/master/QuestItem/QuestItem.lua
 --
 -- Keeps Bagshui.activeQuestItems updated with the NAMES of items which are objectives of current quests.
+-- On Wrath, this also includes special quest-use items returned by GetQuestLogSpecialItemInfo().
 -- (We can't get item IDs due to Vanilla limitations).
 --
 -- Raises BAGSHUI_ACTIVE_QUEST_ITEM_UPDATE when changes to Bagshui.activeQuestItems occur.
@@ -44,7 +45,7 @@ Bagshui:AddComponent(function()
     -- }
     --
     -- ```
-    ---@type table<string, { questName: string, needed: number, obtained: number }>
+    ---@type table<string, { questName: string, needed: number?, obtained: number?, specialItem: boolean? }>
     items = Bagshui.currentCharacterData[ACTIVE_QUEST_ITEMS_DATA_STORAGE_KEY],
   }
 
@@ -70,6 +71,29 @@ Bagshui:AddComponent(function()
 
   --- Parse the quest log to find the names of items that are quest objectives.
   function ActiveQuestItemManager:Update()
+    --- Store an active quest item, preserving objective progress when available.
+    ---@param itemName string?
+    ---@param questName string
+    ---@param needed number?
+    ---@param obtained number?
+    ---@param specialItem boolean?
+    local function storeActiveQuestItem(itemName, questName, needed, obtained, specialItem)
+      if not itemName or string.len(itemName) == 0 then
+        return
+      end
+
+      if specialItem and self.items[itemName] then
+        return
+      end
+
+      self.items[itemName] = {
+        questName = questName,
+        needed = needed,
+        obtained = obtained,
+        specialItem = specialItem or nil,
+      }
+    end
+
     -- The quest log is one of those annoying things where you can't directly ask
     -- about a quest; you have the tell the client to *select* the quest, and then
     -- all the quest info functions work on that. This becomes a problem if the
@@ -88,11 +112,12 @@ Bagshui:AddComponent(function()
     -- we don't see, but erasing it is easier. (Can always change if it's not performant enough).
     BsUtil.TableClear(self.items)
 
-    local questName, isHeader, objectiveText, itemType, itemName, numNeeded, numObtained
+    local questName, isHeader, objectiveText, itemType, itemName, numNeeded, numObtained, specialItemLink, specialItemName
 
     for questNum = 1, _G.GetNumQuestLogEntries(), 1 do
       -- Only need a couple pieces of information from GetQuestLogTitle.
-      questName, _, _, isHeader, _, _ = _G.GetQuestLogTitle(questNum)
+      -- Wrath returns questTag and suggestedGroup before isHeader.
+      questName, _, _, _, isHeader = _G.GetQuestLogTitle(questNum)
 
       if not isHeader then
         itemName = nil
@@ -106,8 +131,8 @@ Bagshui:AddComponent(function()
         -- local questionDescription, questObjectiveText = _G.GetQuestLogQuestText()
 
         -- Quest objectives are in the "Leader Boards".
-        for i = 1, _G.GetNumQuestLeaderBoards() do
-          objectiveText, itemType = _G.GetQuestLogLeaderBoard(i)
+        for i = 1, _G.GetNumQuestLeaderBoards(questNum) do
+          objectiveText, itemType = _G.GetQuestLogLeaderBoard(i, questNum)
 
           -- We only care if type is item/object (not monster, event, etc.).
           if itemType ~= nil and (itemType == "item" or itemType == "object") then
@@ -115,12 +140,17 @@ Bagshui:AddComponent(function()
             -- `<Item Name>: <Number Obtained>/<Total Needed>`
             _, _, itemName, numObtained, numNeeded = string.find(objectiveText, "(.+): (%d+)/(%d+)")
             if itemName then
-              self.items[itemName] = {
-                questName = questName,
-                needed = numNeeded,
-                obtained = numObtained,
-              }
+              storeActiveQuestItem(itemName, questName, tonumber(numNeeded), tonumber(numObtained))
             end
+          end
+        end
+
+        -- Wrath special quest-use items appear in the tracker but not always as item objectives.
+        if type(_G.GetQuestLogSpecialItemInfo) == "function" then
+          specialItemLink = _G.GetQuestLogSpecialItemInfo(questNum)
+          if specialItemLink then
+            specialItemName = _G.GetItemInfo(specialItemLink)
+            storeActiveQuestItem(specialItemName, questName, nil, nil, true)
           end
         end
       end
