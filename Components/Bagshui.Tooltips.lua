@@ -43,11 +43,15 @@ Bagshui:AddComponent(function()
     -- Set all text the same size as the title so that when we scale down the tooltip
     -- the non-title text doesn't become unreadable.
     local _, titleFontSize = _G[iconButtonTooltipName .. "TextLeft1"]:GetFont()
-    for i = 2, 10 do
-      _G[iconButtonTooltipName .. "TextLeft" .. i]:SetFont(
-        _G[iconButtonTooltipName .. "TextLeft" .. i]:GetFont(),
-        titleFontSize
-      )
+    local i = 2
+    while true do
+      local tooltipTextLeft = _G[iconButtonTooltipName .. "TextLeft" .. i]
+      if not tooltipTextLeft then
+        break
+      end
+
+      tooltipTextLeft:SetFont(tooltipTextLeft:GetFont(), titleFontSize)
+      i = i + 1
     end
     self.tooltips.iconButton:SetScale(0.65)
 
@@ -744,4 +748,3 @@ Bagshui:AddComponent(function()
   Bagshui:InitTooltips()
   Bagshui:AddInfoTooltipHooks()
 end)
-
