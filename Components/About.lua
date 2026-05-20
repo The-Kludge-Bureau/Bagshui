@@ -42,6 +42,7 @@ Bagshui:AddComponent(function()
 
     local url = Bagshui.prototypes.Ui:CreateEditBox("AboutUrl", self.uiFrame, nil, nil, nil, true, true)
     Bagshui.prototypes.Ui:SetEditBoxTextReadOnly(url, BS_URL)
+    url:SetCursorPosition(0)
     url:SetWidth(150)
     url:SetHeight(16)
     url:SetTextInsets(0, 0, 0, 0)
@@ -88,4 +89,3 @@ Bagshui:AddComponent(function()
     end
   end
 end)
-
