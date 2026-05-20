@@ -162,6 +162,19 @@ Bagshui:AddComponent(function()
       return false
     end
 
+    -- Bank right-click should keep Blizzard's normal transfer behavior.
+    -- Wrath's secure item action will equip equippable items instead of moving
+    -- them from the bank into Bags, which breaks the usual bank interaction.
+    if self.inventoryType == BS_INVENTORY_TYPE.BANK then
+      return false
+    end
+
+    -- Inventory right-click should also keep Blizzard's normal bank-transfer
+    -- behavior while the bank is open instead of using Wrath's secure item path.
+    if self.inventoryType ~= BS_INVENTORY_TYPE.BANK and Bagshui.components.Bank.atBank then
+      return false
+    end
+
     -- Merchant sale protection must intercept before the item can be sold.
     if
       self.ui:IsFrameVisible("MerchantFrame")
@@ -235,7 +248,21 @@ Bagshui:AddComponent(function()
     end
 
     local buttonSuffix = (mouseButton == "RightButton" and "2") or "1"
+    local disableSecureItemReference = (
+      mouseButton == "RightButton"
+      and (
+        (
+          self.inventoryType == BS_INVENTORY_TYPE.BANK
+          and type(bagNum) == "number"
+          and self.containers
+          and self.containers[bagNum]
+        )
+        or (self.inventoryType ~= BS_INVENTORY_TYPE.BANK and Bagshui.components.Bank.atBank)
+      )
+    )
     local secureItemReference = (
+      not disableSecureItemReference
+      and
       type(bagNum) == "number"
       and type(slotNum) == "number"
       and tostring(bagNum) .. " " .. tostring(slotNum)
