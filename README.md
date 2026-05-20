@@ -3,7 +3,7 @@
 <div width="100%">&nbsp;<br></div>
 </h1>
 
-**Feng shui for your bags:** A Vanilla WoW 1.12 (and Turtle WoW) inventory addon.<br><sup>Not for Classic or Retail; you have [so](https://www.curseforge.com/wow/addons/better-bags) [many](https://www.curseforge.com/wow/addons/ark-inventory) [options](https://www.curseforge.com/wow/search?class=addons&categories=bags-inventory&sortBy=popularity).</sup>
+**Feng shui for your bags:** A Wrath of the Lich King 3.3.5a inventory addon.<br><sup>The current `main` branch targets WotLK. Older Vanilla and Turtle WoW releases remain available in older tags.</sup>
 
 <h4><picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/veechs/Bagshui/wiki/images/BagshuiScreenshots.png">
@@ -100,7 +100,6 @@ Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
 - [OmniCC](https://github.com/Otari98/OmniCC)
 - [pfUI](https://shagu.org/pfUI/)
 - [ShaguTweaks](https://shagu.org/ShaguTweaks/)
-- [Turtle Dragonflight](https://github.com/TheLinuxITGuy/Turtle-Dragonflight)
 
 </td>
 </tr>
@@ -155,7 +154,7 @@ If Bagshui has not been localized for your client, many items will not be correc
 - English (enUS)
 - Chinese (zhCN)
 
-[^1]: In Vanilla, a _lot_ of item identification must be done either by parsing tooltips or hardcoding item IDs. Bagshui leans toward the former, and therefore is highly dependent on localization.
+[^1]: Even on WotLK, some item identification still has to be done either by parsing tooltips or hardcoding item IDs. Bagshui leans toward the former, and therefore is still highly dependent on localization.
 
 ## Credits
 
