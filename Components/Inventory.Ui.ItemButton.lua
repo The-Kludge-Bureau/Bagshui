@@ -1300,7 +1300,7 @@ Bagshui:AddComponent(function()
             or (_G.IsControlKeyDown() and _G.IsAltKeyDown() and _G.IsShiftKeyDown())
           )
         then
-          self:ContainerItemAction(item, "Use", false)
+          self:ContainerItemAction(item, "Use")
         elseif
           -- Blizzard Mail Attachments - Right-click/Alt+click.
           self:IsItemClickActionAllowed(mouseButton, "InboxFrame", "SendMailFrame")
@@ -1318,8 +1318,7 @@ Bagshui:AddComponent(function()
           and self.ui:IsFrameVisible("MailFrame")
           and _G.IsAddOnLoaded("Mail")
         then
-          -- Pretend Alt isn't down so Mail's UseContainerItem will do the work.
-          self:ContainerItemAction(item, "Use", false)
+          clickHandled = false
         elseif
           -- CT_MailMod, Postal, and Postal Returned [Postal is descended from CT_MailMod] -
           -- Right-click (they only provide Alt+click).
@@ -1340,8 +1339,7 @@ _G.IsAddOnLoaded("Postal")
             )
           )
         then
-          -- Pretend Alt is down so their code will do the item attachment work.
-          self:ContainerItemAction(item, "Pickup", true)
+          clickHandled = false
         elseif
           -- "Old" Aux <https://github.com/mrrosh/aux-addon_old-interface/>.
           -- Unlike the newer aux, old Aux has Alt/Control/Shift+click handling
@@ -1356,17 +1354,11 @@ _G.IsAddOnLoaded("Postal")
           and self.ui:IsFrameVisible("AuctionFrame")
         then
           if mouseButton == "RightButton" and self.settings.rightClickAttach then
-            -- Make right-clicking behave like all other auction house right-clicks (send to Sell tab).
-            local oldGlobalThis = _G.this
-            local oldIsAltKeyDown = _G.IsAltKeyDown
-            _G.this = itemButton.bagshuiData.getIdProxy or _G.this -- Have to force the use of the item button proxy for GetID()/GetParent():GetID().
-            _G.IsAltKeyDown = BsUtil.ReturnTrue
-            _G.Aux_ContainerFrameItemButton_OnClick(itemButton.bagshuiData.getIdProxy or _G.this, "LeftButton")
-            _G.IsAltKeyDown = oldIsAltKeyDown
-            _G.this = oldGlobalThis
+            -- Route through the normal auction attach path instead of spoofing Alt,
+            -- which can taint later secure action-bar clicks.
+            self:AttachItem(item, _G.AuctionFrameTab_OnClick, _G.AuctionFrameTab3, _G.ClickAuctionSellItemButton)
           else
-            -- Let things fall through the normal path so `Aux_ContainerFrameItemButton_OnClick()`
-            -- will handle Alt/Control/Shift+click.
+            -- Let things fall through the normal path so aux can handle Alt/Control/Shift+click.
             clickHandled = false
           end
         elseif
@@ -1382,8 +1374,7 @@ _G.IsAddOnLoaded("Postal")
           and _G.IsAddOnLoaded("aux-addon")
           and self.ui:IsFrameVisible("aux_frame")
         then
-          -- Pretend Alt isn't down so aux's UseContainerItem will do the work.
-          self:ContainerItemAction(item, "Use", false)
+          clickHandled = false
         elseif
           -- Trade - Right-click/Alt+click.
           self:IsItemClickActionAllowed(mouseButton, "TradeFrame")
@@ -1464,8 +1455,8 @@ _G.IsAddOnLoaded("Postal")
     return texture
   end
 
-  --- Call `PickupContainerItem()` for the given item, forcing Alt to be up, and
-  --- optionally calling the specified function(s) before/after.
+  --- Call `PickupContainerItem()` for the given item and optionally call the
+  --- specified function(s) before/after.
   --- The cursor will be cleared afterwards if an item is present, since the whole
   --- point of this function is to get an item attached. To pick up an item, use
   --- Bagshui:PickupItem() instead.
@@ -1479,9 +1470,7 @@ _G.IsAddOnLoaded("Postal")
       beforePickupFunction(beforePickupParam)
     end
 
-    -- Ensure Alt is NOT down so addons like CT_MailMod, Postal, and Postal Returned that hook
-    -- PickupContainerItem and alter its behavior when Alt is down won't mess things up.
-    self:ContainerItemAction(item, "Pickup", false)
+    _G.PickupContainerItem(item.bagNum, item.slotNum)
 
     if type(afterPickupFunction) == "function" then
       afterPickupFunction(afterPickupParam)
@@ -1493,16 +1482,11 @@ _G.IsAddOnLoaded("Postal")
     end
   end
 
-  --- Call `PickupContainerItem()` or `UseContainerItem()` for the given item while forcing
-  --- the Alt key to be in a specific state by temporarily overriding `IsAltKeyDown()`.
+  --- Call `PickupContainerItem()` or `UseContainerItem()` for the given item.
   ---@param item table Bagshui item.
   ---@param action string `"Pickup"` or `"Use"` as in `PickupContainerItem` or `UseContainerItem`.
-  ---@param altDown boolean? `true` for Alt down, `false` for Alt up.
-  function Inventory:ContainerItemAction(item, action, altDown)
-    local oldIsAltKeyDown = _G.IsAltKeyDown
-    _G.IsAltKeyDown = altDown and BsUtil.ReturnTrue or BsUtil.ReturnFalse
+  function Inventory:ContainerItemAction(item, action)
     _G[(string.lower(action or "") == "use" and "UseContainerItem" or "PickupContainerItem")](item.bagNum, item.slotNum)
-    _G.IsAltKeyDown = oldIsAltKeyDown
   end
 
   --- Determine whether an Alt+click or right-click action is allowed.
@@ -1586,7 +1570,7 @@ _G.IsAddOnLoaded("Postal")
       -- Calling PickupContainerItem() directly since we don't need any of the things
       -- Bagshui:PickupItem() provides (and calling ContainerFrameItemButton_OnClick()
       -- will generate an error now since _G.this isn't the item button.)
-      self:ContainerItemAction(self.queuedTradeItem, "Pickup", false)
+      self:ContainerItemAction(self.queuedTradeItem, "Pickup")
     end
     _G.ClickTradeButton(1)
 
