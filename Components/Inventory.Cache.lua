@@ -118,7 +118,7 @@ Bagshui:AddComponent(function()
           or nil
         if bagSlotLink ~= nil then
           _, _, bagItemCode = string.find(bagSlotLink, "(%d+):")
-          _, _, _, _, _, bagType, _, _, bagTexture = _G.GetItemInfo(bagItemCode)
+          _, _, _, _, _, _, bagType, _, _, bagTexture = _G.GetItemInfo(bagItemCode)
         end
       end
 

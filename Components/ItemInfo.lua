@@ -122,7 +122,7 @@ Bagshui:LoadComponent(function()
       -- Call and store GetItemInfo results
       -- itemString can be nil if itemIdentifier was numeric or ParseItemLink couldn't get results,
       -- so try with the original identifier in that case.
-      itemName, itemStringFromGetItemInfo, itemQuality, itemMinLevel, itemType, itemSubtype, itemMaxStackCount, itemEquipLocation, itemTexture =
+      itemName, itemStringFromGetItemInfo, itemQuality, _, itemMinLevel, itemType, itemSubtype, itemMaxStackCount, itemEquipLocation, itemTexture =
         _G.GetItemInfo(itemString or itemIdentifier)
 
       -- Post-server query item identifier processing.
@@ -934,4 +934,3 @@ not validate
 
   Bagshui:RegisterEvent("ADDON_LOADED", ItemInfo)
 end)
-
