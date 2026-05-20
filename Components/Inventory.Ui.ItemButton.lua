@@ -189,7 +189,7 @@ Bagshui:AddComponent(function()
     if
       self:IsItemClickActionAllowed(mouseButton, "InboxFrame", "SendMailFrame")
       and not _G.IsAddOnLoaded("Mail")
-      and _G.SendMailPackageButton:IsEnabled() == 1
+      and type(_G.ClickSendMailItemButton) == "function"
     then
       return false
     end
@@ -1301,10 +1301,10 @@ Bagshui:AddComponent(function()
           -- Doing two checks here for "Mail" addon in case another addon ends up replicating
           -- the way it handles attachments.
           and not _G.IsAddOnLoaded("Mail")
-          and _G.SendMailPackageButton:IsEnabled() == 1
+          and type(_G.ClickSendMailItemButton) == "function"
         then
           -- Switch to the Send Mail tab and attach the item.
-          self:AttachItem(item, _G.MailFrameTab_OnClick, 2, _G.ClickSendMailItemButton)
+          self:AttachItem(item, _G.MailFrameTab_OnClick, _G.MailFrameTab2, _G.ClickSendMailItemButton)
         elseif
           -- "Mail" addon - Alt+click (it only provides right-click).
           (mouseButton == "LeftButton" and _G.IsAltKeyDown())
@@ -1368,7 +1368,7 @@ _G.IsAddOnLoaded("Postal")
           self:IsItemClickActionAllowed(mouseButton, "AuctionFrame")
         then
           -- Switch to the Auctions tab and attach the item.
-          self:AttachItem(item, _G.AuctionFrameTab_OnClick, 3, _G.ClickAuctionSellItemButton)
+          self:AttachItem(item, _G.AuctionFrameTab_OnClick, _G.AuctionFrameTab3, _G.ClickAuctionSellItemButton)
         elseif
           -- aux - Alt+click (it only provides right-click).
           (mouseButton == "LeftButton" and _G.IsAltKeyDown())
