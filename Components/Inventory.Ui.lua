@@ -748,7 +748,8 @@ Bagshui:AddComponent(function()
       anchorToPoint = "LEFT",
       disable = false,
       preClick = function(button, mouseButton)
-        self:ConfigureSecureItemUseButton(button, nil, nil)
+        self:ConfigureSecureItemUseButton(button, nil, nil, "LeftButton")
+        self:ConfigureSecureItemUseButton(button, nil, nil, "RightButton")
         if self.hearthstoneItemRef and Bagshui:GetCursorItem() ~= self.hearthstoneItemRef then
           self:ConfigureSecureItemUseButton(
             button,
@@ -759,7 +760,7 @@ Bagshui:AddComponent(function()
         end
       end,
       onClick = function(button)
-        self:ConfigureSecureItemUseButton(button, nil, nil)
+        self:RefreshSecureItemUseButtons()
         if Bagshui:GetCursorItem() == self.hearthstoneItemRef then
           _G.ClearCursor()
           return
@@ -783,6 +784,8 @@ Bagshui:AddComponent(function()
         self:ItemButton_OnUpdate(_G.arg1)
       end,
     })
+    self:ConfigureSecureItemUseButton(buttons.toolbar.hearthstone, nil, nil, "LeftButton", true)
+    self:ConfigureSecureItemUseButton(buttons.toolbar.hearthstone, nil, nil, "RightButton", true)
     -- Keep the Hearthstone toolbar button compatible with our tooltip proxy logic.
     ui:AddItemSlotButtonGetIdProxy(buttons.toolbar.hearthstone)
 
@@ -814,7 +817,8 @@ Bagshui:AddComponent(function()
       texture = "Clam",
       tooltipTitle = L.OpenContainer,
       preClick = function(button, mouseButton)
-        self:ConfigureSecureItemUseButton(button, nil, nil)
+        self:ConfigureSecureItemUseButton(button, nil, nil, "LeftButton")
+        self:ConfigureSecureItemUseButton(button, nil, nil, "RightButton")
         if self.nextOpenableItemBagNum and self.nextOpenableItemSlotNum then
           self:ConfigureSecureItemUseButton(
             button,
@@ -825,7 +829,7 @@ Bagshui:AddComponent(function()
         end
       end,
       onClick = function(button)
-        self:ConfigureSecureItemUseButton(button, nil, nil)
+        self:RefreshSecureItemUseButtons()
       end,
       onEnter = function()
         -- Actual work will be handled in OnUpdate.
@@ -858,6 +862,8 @@ Bagshui:AddComponent(function()
         _G.this.bagshuiData.wasUpdated = true
       end,
     })
+    self:ConfigureSecureItemUseButton(buttons.toolbar.clam, nil, nil, "LeftButton", true)
+    self:ConfigureSecureItemUseButton(buttons.toolbar.clam, nil, nil, "RightButton", true)
 
     -- Disenchant button.
     buttons.toolbar.disenchant = ui:CreateIconButton({

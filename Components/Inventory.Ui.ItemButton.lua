@@ -11,13 +11,15 @@ Bagshui:AddComponent(function()
       return
     end
 
-    itemButton:SetAttribute("type1", nil)
-    itemButton:SetAttribute("item1", nil)
-    itemButton:SetAttribute("type2", nil)
-    itemButton:SetAttribute("item2", nil)
+    local buttonInfo = itemButton.bagshuiData
 
-    if itemButton.bagshuiData then
-      itemButton.bagshuiData.secureItemUseButton = nil
+    itemButton:SetAttribute("type1", buttonInfo and buttonInfo.secureItemUseType1 or nil)
+    itemButton:SetAttribute("item1", buttonInfo and buttonInfo.secureItemUseItem1 or nil)
+    itemButton:SetAttribute("type2", buttonInfo and buttonInfo.secureItemUseType2 or nil)
+    itemButton:SetAttribute("item2", buttonInfo and buttonInfo.secureItemUseItem2 or nil)
+
+    if buttonInfo then
+      buttonInfo.secureItemUseButton = nil
     end
   end
 
@@ -226,7 +228,8 @@ Bagshui:AddComponent(function()
   ---@param bagNum number?
   ---@param slotNum number?
   ---@param mouseButton string?
-  function Inventory:ConfigureSecureItemUseButton(button, bagNum, slotNum, mouseButton)
+  ---@param persist boolean? Store these attributes as the button's baseline secure state.
+  function Inventory:ConfigureSecureItemUseButton(button, bagNum, slotNum, mouseButton, persist)
     if not button or (_G.InCombatLockdown and _G.InCombatLockdown()) then
       return
     end
@@ -238,18 +241,21 @@ Bagshui:AddComponent(function()
       and tostring(bagNum) .. " " .. tostring(slotNum)
     ) or nil
 
-    button:SetAttribute("type1", nil)
-    button:SetAttribute("item1", nil)
-    button:SetAttribute("type2", nil)
-    button:SetAttribute("item2", nil)
+    local typeKey = "type" .. buttonSuffix
+    local itemKey = "item" .. buttonSuffix
+    local attributeType = secureItemReference and "item" or nil
 
-    if secureItemReference then
-      button:SetAttribute("type" .. buttonSuffix, "item")
-      button:SetAttribute("item" .. buttonSuffix, secureItemReference)
-      if button.bagshuiData then
-        button.bagshuiData.secureItemUseButton = (buttonSuffix == "2" and "RightButton") or "LeftButton"
-      end
-    elseif button.bagshuiData then
+    if persist and button.bagshuiData then
+      button.bagshuiData[typeKey == "type1" and "secureItemUseType1" or "secureItemUseType2"] = attributeType
+      button.bagshuiData[itemKey == "item1" and "secureItemUseItem1" or "secureItemUseItem2"] = secureItemReference
+    end
+
+    button:SetAttribute(typeKey, attributeType)
+    button:SetAttribute(itemKey, secureItemReference)
+
+    if secureItemReference and button.bagshuiData and not persist then
+      button.bagshuiData.secureItemUseButton = (buttonSuffix == "2" and "RightButton") or "LeftButton"
+    elseif button.bagshuiData and not persist then
       button.bagshuiData.secureItemUseButton = nil
     end
   end
@@ -272,15 +278,76 @@ Bagshui:AddComponent(function()
     local buttonInfo = itemButton.bagshuiData
     local item = self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum]
     if not self:ShouldUseItemSecurely(item, mouseButton) then
+      self:ConfigureSecureItemUseButton(itemButton, nil, nil, mouseButton)
       return
     end
 
-    itemButton:SetAttribute("type" .. (mouseButton == "RightButton" and "2" or "1"), "item")
-    itemButton:SetAttribute(
-      "item" .. (mouseButton == "RightButton" and "2" or "1"),
-      tostring(buttonInfo.bagNum) .. " " .. tostring(buttonInfo.slotNum)
-    )
-    buttonInfo.secureItemUseButton = mouseButton
+    self:ConfigureSecureItemUseButton(itemButton, buttonInfo.bagNum, buttonInfo.slotNum, mouseButton)
+  end
+
+  --- Refresh baseline secure item-use attributes on visible inventory buttons.
+  --- This is needed after combat because secure attributes cannot be updated during lockdown.
+  function Inventory:RefreshSecureItemUseButtons()
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+      return
+    end
+
+    for _, button in ipairs(self.ui.buttons.itemSlots) do
+      if button.bagshuiData and button.bagshuiData.bagNum and button.bagshuiData.slotNum then
+        local item = button.bagshuiData.item
+        local enableSecureRightClick = self.online and not self.editMode and item and item.emptySlot ~= 1
+        self:ConfigureSecureItemUseButton(
+          button,
+          enableSecureRightClick and button.bagshuiData.bagNum or nil,
+          enableSecureRightClick and button.bagshuiData.slotNum or nil,
+          "RightButton",
+          true
+        )
+        self:ConfigureSecureItemUseButton(button, nil, nil, "LeftButton", true)
+      end
+    end
+
+    if self.ui and self.ui.buttons and self.ui.buttons.toolbar then
+      local enableSecureHearthstoneUse = self.online and not self.editMode and self.hearthstoneItemRef
+      self:ConfigureSecureItemUseButton(
+        self.ui.buttons.toolbar.hearthstone,
+        enableSecureHearthstoneUse and self.hearthstoneItemRef.bagNum or nil,
+        enableSecureHearthstoneUse and self.hearthstoneItemRef.slotNum or nil,
+        "LeftButton",
+        true
+      )
+      self:ConfigureSecureItemUseButton(
+        self.ui.buttons.toolbar.hearthstone,
+        enableSecureHearthstoneUse and self.hearthstoneItemRef.bagNum or nil,
+        enableSecureHearthstoneUse and self.hearthstoneItemRef.slotNum or nil,
+        "RightButton",
+        true
+      )
+
+      local enableSecureOpenableUse = (
+        self.online
+        and not self.editMode
+        and self.nextOpenableItemBagNum
+        and self.nextOpenableItemSlotNum
+        and self.hasOpenables
+        and not Bagshui.components.Bank.atBank
+        and not self.itemPendingSale
+      )
+      self:ConfigureSecureItemUseButton(
+        self.ui.buttons.toolbar.clam,
+        enableSecureOpenableUse and self.nextOpenableItemBagNum or nil,
+        enableSecureOpenableUse and self.nextOpenableItemSlotNum or nil,
+        "LeftButton",
+        true
+      )
+      self:ConfigureSecureItemUseButton(
+        self.ui.buttons.toolbar.clam,
+        enableSecureOpenableUse and self.nextOpenableItemBagNum or nil,
+        enableSecureOpenableUse and self.nextOpenableItemSlotNum or nil,
+        "RightButton",
+        true
+      )
+    end
   end
 
   --- ### Now it's time for fun with metatables!
@@ -1047,10 +1114,18 @@ Bagshui:AddComponent(function()
 
     local buttonInfo = itemButton.bagshuiData
     local secureItemUseButton = buttonInfo.secureItemUseButton
+    local baselineSecureItemUseButton
     if secureItemUseButton and not (_G.InCombatLockdown and _G.InCombatLockdown()) then
       clearSecureItemUse(itemButton)
     else
       buttonInfo.secureItemUseButton = nil
+      if _G.InCombatLockdown and _G.InCombatLockdown() then
+        if mouseButton == "LeftButton" and buttonInfo.secureItemUseType1 == "item" and buttonInfo.secureItemUseItem1 then
+          baselineSecureItemUseButton = "LeftButton"
+        elseif mouseButton == "RightButton" and buttonInfo.secureItemUseType2 == "item" and buttonInfo.secureItemUseItem2 then
+          baselineSecureItemUseButton = "RightButton"
+        end
+      end
     end
 
     local item = self.inventory[buttonInfo.bagNum][buttonInfo.slotNum]
@@ -1089,10 +1164,14 @@ Bagshui:AddComponent(function()
       -- Normal processing (non-Edit Mode).
 
       -- Wrath handled this click through the secure item-use path in PreClick.
-      if secureItemUseButton == mouseButton then
+      if secureItemUseButton == mouseButton or baselineSecureItemUseButton == mouseButton then
         self:ClearItemPendingSale(nil, true)
         self:ItemButton_OnLeave(itemButton)
-        self:ForceUpdateWindow()
+        if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+          self:ForceUpdateWindow()
+        else
+          self:UpdateItemSlotCooldowns()
+        end
         return
       end
 

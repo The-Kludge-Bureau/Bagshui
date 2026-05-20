@@ -70,6 +70,12 @@ Bagshui:AddComponent(function()
       return
     end
 
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+      self.combatDeferredUpdate = true
+      self.windowUpdateBlocked = false
+      return
+    end
+
     -- Perform all updates in the necessary order.
     self:ValidateLayout()
     -- Capture resort signals before ManageDryRun(true) clears forceResort.
@@ -1316,6 +1322,17 @@ self.settings.showBagBar and (uiButtons.itemSlots[1].bagshuiData.originalSizeAdj
           button.bagshuiData.slotNum = self.groupItems[groupId][position].slotNum
           button.bagshuiData.isEmptySlotStack = isEmptySlotStack
 
+          -- Maintain a stable secure right-click item-use path so Wrath can still
+          -- use inventory items while the addon is in combat lockdown.
+          self:ConfigureSecureItemUseButton(
+            button,
+            button.bagshuiData.bagNum,
+            button.bagshuiData.slotNum,
+            "RightButton",
+            true
+          )
+          self:ConfigureSecureItemUseButton(button, nil, nil, "LeftButton", true)
+
           -- Display the item slot button.
           self:ShowFrameInNextPosition("AssignItemsToSlots", rowNum, button, itemSlotSize)
 
@@ -2163,6 +2180,8 @@ self.dockedInventory and self.dockedInventory.multiplePartialStacks
     end
     -- Search
     self.ui.buttons.toolbar.search[editModeState](self.ui.buttons.toolbar.search)
+
+    self:RefreshSecureItemUseButtons()
 
     -- Parent toolbar needs to sync state.
     if self.dockedToInventory then

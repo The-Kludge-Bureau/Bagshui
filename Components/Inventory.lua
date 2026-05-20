@@ -246,6 +246,7 @@ Bagshui:AddComponent(function()
         PLAYER_ENTERING_WORLD = true,
         BAG_UPDATE = true,
         BAG_UPDATE_COOLDOWN = true,
+        PLAYER_REGEN_ENABLED = true,
         ITEM_LOCKED = true, -- Doesn't seem to actually ever fire but let's register for it anyway.
         ITEM_LOCK_CHANGED = true, -- Required for multiple reasons, including preventing items from staying gray if you attempt to place them in an incompatible container (ex. non-ammo in ammo bags).
         MERCHANT_CLOSED = true, -- Clear pending sale item when leaving the merchant.
@@ -851,6 +852,19 @@ Bagshui:AddComponent(function()
     if event == "BAG_UPDATE_COOLDOWN" then
       if self:Visible() then
         self:UpdateItemSlotCooldowns()
+      end
+      return
+    end
+
+    if event == "PLAYER_REGEN_ENABLED" then
+      local hadDeferredUpdate = self.combatDeferredUpdate
+      self.combatDeferredUpdate = nil
+
+      if self:Visible() then
+        self:RefreshSecureItemUseButtons()
+        if hadDeferredUpdate then
+          self:QueueUpdate(0.01)
+        end
       end
       return
     end
