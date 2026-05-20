@@ -32,11 +32,11 @@ Bagshui:AddComponent(function()
       self.blizzBankFrame:UnregisterEvent("BANKFRAME_OPENED")
       self.blizzBankFrame:UnregisterEvent("BANKFRAME_CLOSED")
 
-      -- Swap with the Blizzard bank frame.
+      -- Keep the Blizzard frame available for other addons that expect the global
+      -- BankFrame object, but suppress its own open/close handling.
       if self.blizzBankFrame:IsVisible() then
         self.blizzBankFrame:Hide()
       end
-      _G.setglobal("BankFrame", self.uiFrame)
     else
       -- Can't restore if we haven't done the takeover.
       if not self.blizzBankFrame then
@@ -51,7 +51,6 @@ Bagshui:AddComponent(function()
 
       -- Make the switch.
       self:Close()
-      _G.setglobal("BankFrame", self.blizzBankFrame)
     end
   end
 
@@ -106,10 +105,14 @@ Bagshui:AddComponent(function()
       end
       if self.containers[this.bagshuiData.bagNum].nextPurchasable then
         _G.PlaySound("igMainMenuOption")
-        -- The CONFIRM_BUY_BANK_SLOT dialog looks at the nextSlotCost property of
-        -- BankFrame to get the cost. Since we're replacing BankFrame with our frame,
-        -- we need to set that property.
-        self.uiFrame.nextSlotCost = _G.GetBankSlotCost(this.bagshuiData.bagSlotNum)
+        -- The CONFIRM_BUY_BANK_SLOT dialog reads BankFrame.nextSlotCost from the
+        -- Blizzard frame object, so keep that updated even though Bagshui handles
+        -- the visible bank UI.
+        local nextSlotCost = _G.GetBankSlotCost(this.bagshuiData.bagSlotNum)
+        self.uiFrame.nextSlotCost = nextSlotCost
+        if self.blizzBankFrame then
+          self.blizzBankFrame.nextSlotCost = nextSlotCost
+        end
         _G.StaticPopup_Show("CONFIRM_BUY_BANK_SLOT")
       elseif not self.containers[this.bagshuiData.bagNum].purchased then
         return
