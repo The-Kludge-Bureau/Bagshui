@@ -535,14 +535,15 @@ Bagshui:LoadComponent(function()
   ---@param ... table Parent classes, in order of priority (i.e. array index #1 is the highest priority superclass).
   ---@return table newClass
   function Util.NewClass(...)
+    local parents = { ... }
     local newClass = {}
     local metatable = {}
 
     -- newClass will search for each property it doesn't have in
-    -- its superclasses (arg is the list of superclasses).
+    -- its superclasses.
     setmetatable(metatable, {
       __index = function(_, prop)
-        return Util.FindSuperclassProperty(prop, arg)
+        return Util.FindSuperclassProperty(prop, parents)
       end,
     })
     metatable.__index = metatable

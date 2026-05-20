@@ -181,7 +181,7 @@ _G.CursorHasItem()
       if callPickupContainerItem then
         _G.PickupContainerItem(item.bagNum, item.slotNum)
       else
-        _G.ContainerFrameItemButton_OnClick("LeftButton")
+        _G.ContainerFrameItemButton_OnClick(_G.this, "LeftButton")
       end
     end
 
@@ -308,4 +308,3 @@ _G.CursorHasItem()
     return ret
   end
 end)
-

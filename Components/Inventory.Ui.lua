@@ -756,7 +756,7 @@ Bagshui:AddComponent(function()
           if buttonProxy then
             local oldGlobalThis = _G.this
             _G.this = buttonProxy
-            _G.ContainerFrameItemButton_OnClick("RightButton")
+            _G.ContainerFrameItemButton_OnClick(buttonProxy, "RightButton")
             _G.this = oldGlobalThis
           end
         else
@@ -813,7 +813,7 @@ Bagshui:AddComponent(function()
           if button and button.bagshuiData and button.bagshuiData.getIdProxy then
             local oldGlobalThis = _G.this
             _G.this = button.bagshuiData.getIdProxy
-            _G.ContainerFrameItemButton_OnClick("RightButton")
+            _G.ContainerFrameItemButton_OnClick(button.bagshuiData.getIdProxy, "RightButton")
             _G.this = oldGlobalThis
           end
         end

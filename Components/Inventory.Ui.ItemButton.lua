@@ -1035,7 +1035,7 @@ _G.IsAddOnLoaded("Postal")
             local oldIsAltKeyDown = _G.IsAltKeyDown
             _G.this = itemButton.bagshuiData.getIdProxy or _G.this -- Have to force the use of the item button proxy for GetID()/GetParent():GetID().
             _G.IsAltKeyDown = BsUtil.ReturnTrue
-            _G.Aux_ContainerFrameItemButton_OnClick("LeftButton")
+            _G.Aux_ContainerFrameItemButton_OnClick(itemButton.bagshuiData.getIdProxy or _G.this, "LeftButton")
             _G.IsAltKeyDown = oldIsAltKeyDown
             _G.this = oldGlobalThis
           else
@@ -1111,7 +1111,7 @@ _G.IsAddOnLoaded("Postal")
             -- - Shift+right-click stack splitting at merchant.
             -- - Otherwise calling UseContainerItem().
             -- It also allows hooks to both ContainerFrameItemButton_OnClick() and UseContainerItem() to work.
-            _G.ContainerFrameItemButton_OnClick(mouseButton)
+            _G.ContainerFrameItemButton_OnClick(_G.this, mouseButton)
           end
           -- Restore global this.
           _G.this = oldGlobalThis

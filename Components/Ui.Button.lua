@@ -166,7 +166,7 @@ Bagshui:AddComponent(function()
       _G.UIDropDownMenu_SetSelectedID(this, nil, 1)
 
       -- Keep the menu width the same as the button.
-      _G.UIDropDownMenu_SetWidth(width, this)
+      _G.UIDropDownMenu_SetWidth(this, width)
 
       -- UIDropDownMenu_Initialize messes with the height so let's reset it.
       this:SetHeight(originalHeight)
