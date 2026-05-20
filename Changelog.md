@@ -1,5 +1,17 @@
 # Bagshui Changelog
 
+## 1.5.16 - 2026-03-21
+
+### Changed
+
+- Improve the 1.5.x inventory update pipeline by tracking dirty state so Bagshui can skip redundant categorize, sort, lookup-table, and window rebuild work.
+
+### Fixed
+
+- Ensure forced resorts and lookup table rebuilds are preserved through dry-run, event, and Edit Mode update paths so category, sort order, profile, and setting changes still produce correct layouts.
+- Ensure cache changes still rebuild the window when needed, even if the dry run reports no layout change.
+- Refresh item button cooldowns immediately on `BAG_UPDATE_COOLDOWN`.
+
 ## 1.5.15 - 2025-08-23
 
 ### Fixed
