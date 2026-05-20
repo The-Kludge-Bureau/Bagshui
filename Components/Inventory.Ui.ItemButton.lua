@@ -1552,8 +1552,9 @@ _G.IsAddOnLoaded("Postal")
 
   --- Hook for trade frame so we can add the Alt+clicked item after it opens.
   ---@param wowApiFunctionName string Hooked WoW API function that triggered this call.
-  function Inventory:TradeFrame_OnShow(wowApiFunctionName)
-    self.hooks:OriginalHook(wowApiFunctionName)
+  ---@param tradeFrame table Frame passed to Blizzard's TradeFrame_OnShow().
+  function Inventory:TradeFrame_OnShow(wowApiFunctionName, tradeFrame)
+    self.hooks:OriginalHook(wowApiFunctionName, tradeFrame)
     Bagshui:QueueClassCallback(self, self.TradeQueuedItem, 0.05)
   end
 

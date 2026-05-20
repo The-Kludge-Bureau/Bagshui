@@ -259,6 +259,13 @@ Bagshui:AddComponent(function()
     local queueDelay = 0.15
     local thisMoveSucceeded = false
 
+    -- Avoid tainting secure action buttons by waiting until modifiers are physically released
+    -- instead of spoofing the global key state functions during item moves.
+    if _G.IsAltKeyDown() or _G.IsControlKeyDown() or _G.IsShiftKeyDown() then
+      Bagshui:QueueClassCallback(self, self.ProcessMoveQueue, queueDelay, nil)
+      return
+    end
+
     -- Get info about the current operation.
     local source = self.queuedMoveSources[1]
     local target = self.queuedMoveTargets[1]
@@ -366,7 +373,7 @@ Bagshui:AddComponent(function()
     Bagshui:QueueClassCallback(self, self.ProcessMoveQueue, queueDelay, nil)
   end
 
-  --- Move an item from one place to another, ensuring no modifier keys get in the way.
+  --- Move an item from one place to another.
   ---@param source table Inventory cache entry.
   ---@param target table|number Inventory cache entry *or* bag number, if equipping a bag.
   ---@param onComplete function? Called once the operation is complete with a boolean parameter indicating whether the cursor still has an item.
@@ -378,16 +385,9 @@ Bagshui:AddComponent(function()
 
     -- Intentionally calling the game's `PickupContainerItem()` instead of `Bagshui:PickupItem()`
     -- because it's immediately picked up and put down, and we don't need (or want) to invoke
-    -- `ContainerFrameItemButton_OnClick()` either. As an extra safety measure, force all
-    -- modifier keys to return false for the duration of the move since some addons
-    -- hook `PickupContainerItem()` and change its behavior when a modifier is pressed.
+    -- `ContainerFrameItemButton_OnClick()` either. `ProcessMoveQueue()` waits for modifier
+    -- keys to be released before reaching this point so these calls don't need to spoof key state.
 
-    local oldIsAltKeyDown = _G.IsAltKeyDown
-    local oldIsControlKeyDown = _G.IsControlKeyDown
-    local oldIsShiftKeyDown = _G.IsShiftKeyDown
-    _G.IsAltKeyDown = BsUtil.ReturnFalse
-    _G.IsControlKeyDown = BsUtil.ReturnFalse
-    _G.IsShiftKeyDown = BsUtil.ReturnFalse
     _G.PickupContainerItem(source.bagNum, source.slotNum)
     if type(target) == "table" then
       _G.PickupContainerItem(target.bagNum, target.slotNum)
@@ -414,9 +414,6 @@ Bagshui:AddComponent(function()
       -- Callback is handled by WaitForStaticPopupClose().
       doCallback = false
     end
-    _G.IsAltKeyDown = oldIsAltKeyDown
-    _G.IsControlKeyDown = oldIsControlKeyDown
-    _G.IsShiftKeyDown = oldIsShiftKeyDown
 
     if doCallback and type(onComplete) == "function" then
       onComplete((not _G.CursorHasItem()))
