@@ -178,9 +178,12 @@ Bagshui:AddComponent(function()
     -- Merchant sale protection must intercept before the item can be sold.
     if
       self.ui:IsFrameVisible("MerchantFrame")
-      and not _G.IsControlKeyDown()
-      and not (_G.IsControlKeyDown() and _G.IsAltKeyDown() and _G.IsShiftKeyDown())
-      and self:GetItemSellProtectionReason(item)
+      and (
+        self:GetItemSellProtectionReason(item)
+        or _G.IsControlKeyDown()
+        or _G.IsAltKeyDown()
+        or _G.IsShiftKeyDown()
+      )
     then
       return false
     end

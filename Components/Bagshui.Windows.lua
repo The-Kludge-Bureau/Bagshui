@@ -2,6 +2,24 @@
 -- Window management.
 
 Bagshui:LoadComponent(function()
+  -- Protected inventory windows cannot be hidden directly from Blizzard's secure
+  -- CloseAllWindows() path, so defer the hide until a later frame.
+  local hideFrameLater
+  hideFrameLater = function(frame, delay)
+    Bagshui:QueueEvent(function()
+      if not frame or not frame.IsVisible or not frame:IsVisible() then
+        return
+      end
+
+      if _G.InCombatLockdown and _G.InCombatLockdown() then
+        hideFrameLater(frame, 0.2)
+        return
+      end
+
+      frame:Hide()
+    end, delay or 0.00001)
+  end
+
   --- When the escape key is pressed, close all registered frames.
   ---@param wowApiFunctionName string Hooked WoW API function that triggered this call.
   ---@param arg1 any
@@ -22,7 +40,7 @@ Bagshui:LoadComponent(function()
       if frame.isDialog and frame:IsVisible() then
         bagshuiWindowsVisible = true
         dialogsClosed = true
-        frame:Hide()
+        hideFrameLater(frame)
       end
     end
 
@@ -41,7 +59,7 @@ Bagshui:LoadComponent(function()
           dirty = frame.bagshuiData.dirty or frame.bagshuiData.hasModalDialog or hasCursorItem
         end
         if not dirty then
-          frame:Hide()
+          hideFrameLater(frame)
         end
 
         -- Frame is dirty and has an onDirty function.
@@ -112,4 +130,3 @@ Bagshui:LoadComponent(function()
     end
   end
 end)
-
