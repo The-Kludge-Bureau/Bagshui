@@ -752,7 +752,13 @@ Bagshui:AddComponent(function()
           return
         end
         if self.hearthstoneItemRef then
-          _G.UseContainerItem(self.hearthstoneItemRef.bagNum, self.hearthstoneItemRef.slotNum, true)
+          local buttonProxy = buttons.toolbar.hearthstone.bagshuiData.getIdProxy
+          if buttonProxy then
+            local oldGlobalThis = _G.this
+            _G.this = buttonProxy
+            _G.ContainerFrameItemButton_OnClick("RightButton")
+            _G.this = oldGlobalThis
+          end
         else
           Bagshui:ShowAndLogErrorMessage(L.Error_HearthstoneNotFound)
         end
@@ -803,7 +809,13 @@ Bagshui:AddComponent(function()
       tooltipTitle = L.OpenContainer,
       onClick = function()
         if self.nextOpenableItemBagNum and self.nextOpenableItemSlotNum then
-          _G.UseContainerItem(self.nextOpenableItemBagNum, self.nextOpenableItemSlotNum)
+          local button = self:GetItemSlotButtonByBagSlot(self.nextOpenableItemBagNum, self.nextOpenableItemSlotNum)
+          if button and button.bagshuiData and button.bagshuiData.getIdProxy then
+            local oldGlobalThis = _G.this
+            _G.this = button.bagshuiData.getIdProxy
+            _G.ContainerFrameItemButton_OnClick("RightButton")
+            _G.this = oldGlobalThis
+          end
         end
       end,
       onEnter = function()

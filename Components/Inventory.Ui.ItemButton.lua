@@ -416,7 +416,11 @@ Bagshui:AddComponent(function()
                 end
               end
             end
-            _G.GameTooltipMoneyFrame:Hide()
+            if type(_G.GameTooltip_ClearMoney) == "function" then
+              _G.GameTooltip_ClearMoney(_G.GameTooltip)
+            elseif _G.GameTooltipMoneyFrame then
+              _G.GameTooltipMoneyFrame:Hide()
+            end
           end
         end
 
