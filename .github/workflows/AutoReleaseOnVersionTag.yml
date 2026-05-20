@@ -1,8 +1,8 @@
-name: Automatic Release on vX.Y.Z Tag
+name: Automatic Release on X.Y.Z Tag
 on:
   push:
     tags:
-    - "v[0-9]+.[0-9]+.[0-9]+"
+    - "[0-9]+.[0-9]+.[0-9]+"
 jobs:
   release:
     # Override repository workflow security settings to ensure git-release can create the new release.
