@@ -1,5 +1,25 @@
 # Bagshui Changelog
 
+## 2.0.0 - 2026-05-20
+
+### Changed
+
+- Bagshui's `main` branch now targets Wrath of the Lich King 3.3.5a for the 2.x release line. Older Vanilla and Turtle WoW releases remain available in older tags.
+
+### Fixed
+
+- Restore item textures on Wrath.
+- Restore secure item use and toolbar actions on Wrath, including the updated callback and container-button behavior required by the client.
+- Preserve normal right-click bank transfers instead of treating them as item use.
+- Restore Shift+Click stack splitting.
+- Restore Send Mail, auction, and trade item attachments on Wrath, including refreshes for attachments that were left unsent.
+- Fix the Wrath trade frame callback so queued Alt+click trade attachments no longer error when the window opens.
+- Track Wrath special quest items so active quest badges and Bagshui's item information tooltip stay accurate.
+- Create item-slot cooldowns as real Wrath cooldown frames so inventory windows render correctly and cooldown overlays work again.
+- Avoid taint from Bagshui item interactions that could block later secure action-bar clicks, including ElvUI hotbar actions such as Lockpick.
+- Keep the original Blizzard `BankFrame` intact for better compatibility with ElvUI and other addons that still expect it.
+- Open the About dialog link field at the start of the URL instead of the far right edge.
+
 ## 1.5.16 - 2026-03-21
 
 ### Changed
