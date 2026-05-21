@@ -75,6 +75,7 @@ Bagshui:AddComponent(function()
 
       opensViaHooks = true,
       keyBindingPrefix = "TOGGLEBAG",
+      securePanelVisibility = true,
 
       hookSettingTranslations = {
         -- (Open|Close|Toggle)Backpack$ = Bag0.

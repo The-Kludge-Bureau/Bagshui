@@ -289,6 +289,11 @@ Bagshui:AddComponent(function()
       ---@type string The string that goes in front of key binding indexes to look them up.
       keyBindingPrefix = nil,
 
+      ---@type boolean Register the frame with Blizzard's secure UIPanel visibility
+      -- handling so protected inventory windows can still be shown or hidden
+      -- from hardware events during combat.
+      securePanelVisibility = false,
+
       ---@type boolean Debugging options.
       debug = false and BS_DEBUG,
       clearItemCacheAtStartup = false and BS_DEBUG,
@@ -408,6 +413,18 @@ Bagshui:AddComponent(function()
 
       ---@type boolean Alter frame close behavior -- see UiFrame_OnShow().
       dockingFrameVisibleOnLastOpen = false,
+
+      ---@type boolean Whether the current visible state was entered through
+      -- Blizzard's secure UIPanel show path during combat.
+      openedViaSecurePanel = false,
+
+      ---@type boolean Suppress normal OnShow/OnHide side effects during an
+      -- internal visibility handoff.
+      suppressUiFrameScripts = false,
+
+      ---@type table<string, table>|nil UIPanel windows that were temporarily
+      -- displaced to allow a secure combat open.
+      securePanelRestoreFrames = nil,
 
       ---@type boolean Make the bag utilization summary visible at all times - managed by UpdateWindow().
       alwaysShowUsageSummary = false,
@@ -861,6 +878,9 @@ Bagshui:AddComponent(function()
       self.combatDeferredUpdate = nil
 
       if self:Visible() then
+        if self.openedViaSecurePanel then
+          self:RestoreNormalVisibilityAfterCombat()
+        end
         self:RefreshSecureItemUseButtons()
         if hadDeferredUpdate then
           self:QueueUpdate(0.01)

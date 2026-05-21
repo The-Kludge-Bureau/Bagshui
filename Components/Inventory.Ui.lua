@@ -33,6 +33,7 @@ Bagshui:AddComponent(function()
 
     self.uiFrame = ui:CreateWindowFrame("Frame")
     local uiFrame = self.uiFrame
+    self:ConfigureSecurePanelVisibility()
 
     -- Start with the window in the correct position and hidden.
     self:FixWindowPosition()
@@ -51,6 +52,9 @@ Bagshui:AddComponent(function()
 
     local oldOnShow = uiFrame:GetScript("OnShow")
     uiFrame:SetScript("OnShow", function()
+      if self.suppressUiFrameScripts then
+        return
+      end
       self:UiFrame_OnShow()
       if oldOnShow then
         oldOnShow()
@@ -58,6 +62,9 @@ Bagshui:AddComponent(function()
     end)
     local oldOnHide = uiFrame:GetScript("OnHide")
     uiFrame:SetScript("OnHide", function()
+      if self.suppressUiFrameScripts then
+        return
+      end
       self:UiFrame_OnHide()
       if oldOnHide then
         oldOnHide()
@@ -1348,9 +1355,72 @@ Bagshui:AddComponent(function()
     return self.uiFrame:IsVisible()
   end
 
+  --- Register the inventory window with Blizzard's secure UIPanel visibility handling.
+  --- This allows combat-safe show and hide when the frame becomes protected by
+  -- secure child buttons, while leaving Bagshui's own positioning untouched.
+  function Inventory:ConfigureSecurePanelVisibility()
+    if not self.securePanelVisibility or not self.uiFrame or not self.uiFrame.GetName then
+      return
+    end
+
+    local frameName = self.uiFrame:GetName()
+    if not frameName or not _G.UIPanelWindows then
+      return
+    end
+
+    local panelInfo = _G.UIPanelWindows[frameName] or {
+      area = "center",
+      pushable = 0,
+      whileDead = 1,
+      allowOtherPanels = true,
+    }
+    _G.UIPanelWindows[frameName] = panelInfo
+    self.uiFrame:SetAttribute("UIPanelLayout-area", panelInfo.area)
+    self.uiFrame:SetAttribute("UIPanelLayout-pushable", panelInfo.pushable)
+    self.uiFrame:SetAttribute("UIPanelLayout-whileDead", panelInfo.whileDead)
+    self.uiFrame:SetAttribute("UIPanelLayout-allowOtherPanels", panelInfo.allowOtherPanels)
+    self.uiFrame:SetAttribute("UIPanelLayout-defined", true)
+    self.uiFrame:SetAttribute("UIPanelLayout-enabled", true)
+    self.uiFrame.ignoreFramePositionManager = true
+  end
+
+  --- Transition back from Blizzard's secure combat visibility path to Bagshui's
+  -- normal visibility handling once secure restrictions are gone.
+  function Inventory:RestoreNormalVisibilityAfterCombat()
+    if
+      not self.uiFrame
+      or not self.openedViaSecurePanel
+      or (_G.InCombatLockdown and _G.InCombatLockdown())
+    then
+      return
+    end
+
+    self.openedViaSecurePanel = false
+    local restoreFrames = self.securePanelRestoreFrames
+    self.securePanelRestoreFrames = nil
+    self.suppressUiFrameScripts = true
+    if _G.HideUIPanel then
+      _G.HideUIPanel(self.uiFrame, true)
+    else
+      self.uiFrame:Hide()
+    end
+    self.uiFrame:Show()
+    self.suppressUiFrameScripts = false
+    self.uiFrame:Raise()
+
+    if restoreFrames and _G.ShowUIPanel then
+      for _, frame in ipairs(restoreFrames) do
+        if frame and frame ~= self.uiFrame then
+          _G.ShowUIPanel(frame)
+        end
+      end
+    end
+  end
+
   --- Display the window.
   function Inventory:Open()
-    if not self.uiFrame:IsVisible() then
+    local frameWasVisible = self.uiFrame:IsVisible()
+    if not frameWasVisible then
       -- Set to `EVENT_PREFIX_` when the event ends in `_OPENED`.
       -- This will allow for matching against the corresponding
       -- `EVENT_PREFIX_CLOSED`.
@@ -1361,8 +1431,36 @@ Bagshui:AddComponent(function()
           )) and (string.gsub(_G.event, "SHOW$", "")))
         or nil
     end
-    self.uiFrame:Show()
-    self.uiFrame:Raise()
+
+    if
+      not frameWasVisible
+      and
+      self.securePanelVisibility
+      and _G.InCombatLockdown
+      and _G.InCombatLockdown()
+      and _G.ShowUIPanel
+    then
+      local restoreFrames = {}
+      if _G.GetUIPanel then
+        for _, panelKey in ipairs({ "left", "center", "right", "doublewide" }) do
+          local panelFrame = _G.GetUIPanel(panelKey)
+          if panelFrame and panelFrame ~= self.uiFrame then
+            table.insert(restoreFrames, panelFrame)
+          end
+        end
+      end
+      self.securePanelRestoreFrames = restoreFrames
+      self.openedViaSecurePanel = true
+      _G.ShowUIPanel(self.uiFrame)
+    elseif not frameWasVisible then
+      self.securePanelRestoreFrames = nil
+      self.openedViaSecurePanel = false
+      self.uiFrame:Show()
+    end
+
+    if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+      self.uiFrame:Raise()
+    end
     self:SetDockedToFrameVisibility(BS_INVENTORY_UI_VISIBILITY_ACTION.OPEN)
   end
 
@@ -1378,7 +1476,14 @@ Bagshui:AddComponent(function()
       then
         return
       end
-      self.uiFrame:Hide()
+
+      if (self.securePanelVisibility or self.openedViaSecurePanel) and _G.HideUIPanel then
+        _G.HideUIPanel(self.uiFrame, true)
+      else
+        self.uiFrame:Hide()
+      end
+      self.openedViaSecurePanel = false
+      self.securePanelRestoreFrames = nil
     end
   end
 
