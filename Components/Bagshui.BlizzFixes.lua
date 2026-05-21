@@ -18,6 +18,12 @@ Bagshui:LoadComponent(function()
   function Bagshui:MoneyFrame_UpdateMoney(wowApiFunctionName, moneyFrame)
     moneyFrame = moneyFrame or _G.this
 
+    local inventory = moneyFrame and moneyFrame.bagshuiData and moneyFrame.bagshuiData.inventory
+    if inventory and _G.InCombatLockdown and _G.InCombatLockdown() then
+      inventory.moneyFrameUpdateDeferred = true
+      return
+    end
+
     -- There doesn't seem to be anything that initializes the `staticMoney` property
     -- of money frames, but this is only a problem sometimes? It's confusing.
     -- Regardless, this prevents the error from happening.

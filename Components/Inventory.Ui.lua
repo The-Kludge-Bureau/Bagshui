@@ -707,6 +707,7 @@ Bagshui:AddComponent(function()
     frames.money = _G.CreateFrame("Frame", ui:CreateElementName("Money"), footer, "SmallMoneyFrameTemplate")
     frames.money.bagshuiData = {
       name = moneyFrameName,
+      inventory = self,
       texts = {
         gold = _G[moneyFrameName .. "GoldButtonText"],
         silver = _G[moneyFrameName .. "SilverButtonText"],
@@ -1654,7 +1655,7 @@ Bagshui:AddComponent(function()
 
     if string.upper(point) == "RIGHT" or string.upper(point) == "TOP" then
       local dimension = (string.upper(point) == "RIGHT") and "Width" or "Height"
-      offset = -((_G.UIParent["Get" .. dimension](_G.UIParent) / _G.UIParent:GetScale()) - offset)
+      offset = -(_G.UIParent["Get" .. dimension](_G.UIParent) - offset)
     end
 
     return offset
