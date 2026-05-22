@@ -120,6 +120,13 @@ Bagshui:AddComponent(function()
       return false
     end
 
+    -- Spell targeting must use Blizzard's normal path (ContainerFrameItemButton_OnClick
+    -- -> UseContainerItem) so the item is targeted for the spell instead of being
+    -- equipped by the secure item-use button.
+    if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
+      return false
+    end
+
     if self.itemPendingSale and self.itemPendingSale ~= item then
       return false
     end
@@ -148,8 +155,6 @@ Bagshui:AddComponent(function()
           and _G.IsAddOnLoaded("aux-addon")
           and self.ui:IsFrameVisible("aux_frame")
         )
-        -- Spell targeting uses `UseContainerItem()` on Blizzard's left-click path.
-        or (_G.SpellCanTargetItem and _G.SpellCanTargetItem())
       ) and not _G.CursorHasItem()
     end
 
