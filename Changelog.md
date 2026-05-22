@@ -1,5 +1,17 @@
 # Bagshui Changelog
 
+## 2.0.2 - 2026-05-22
+
+### Fixed
+
+- Prevent right-click from equipping items when selling to a vendor. The secure item-use path was intercepting right-clicks before the merchant sell logic could run, requiring manual cursor clearing to continue.
+- Correct window positioning under custom UI scale and fix combat money frame taint.
+- Restore combat bag toggling.
+
+### Docs
+
+- Fix release download link.
+
 ## 2.0.1 - 2026-05-20
 
 ### Fixed
