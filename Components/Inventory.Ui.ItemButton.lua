@@ -175,15 +175,11 @@ Bagshui:AddComponent(function()
       return false
     end
 
-    -- Merchant sale protection must intercept before the item can be sold.
+    -- At merchant, don't use secure path for right-click
+    -- (let ContainerFrameItemButton_OnClick handle selling).
     if
       self.ui:IsFrameVisible("MerchantFrame")
-      and (
-        self:GetItemSellProtectionReason(item)
-        or _G.IsControlKeyDown()
-        or _G.IsAltKeyDown()
-        or _G.IsShiftKeyDown()
-      )
+      and mouseButton == "RightButton"
     then
       return false
     end
@@ -1200,7 +1196,10 @@ Bagshui:AddComponent(function()
       -- Normal processing (non-Edit Mode).
 
       -- Wrath handled this click through the secure item-use path in PreClick.
-      if secureItemUseButton == mouseButton or baselineSecureItemUseButton == mouseButton then
+      -- Don't let the secure path bypass merchant sell logic.
+      if (secureItemUseButton == mouseButton or baselineSecureItemUseButton == mouseButton)
+        and not self.ui:IsFrameVisible("MerchantFrame")
+      then
         self:ClearItemPendingSale(nil, true)
         self:ItemButton_OnLeave(itemButton)
         if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
