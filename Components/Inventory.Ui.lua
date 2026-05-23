@@ -1456,7 +1456,9 @@ Bagshui:AddComponent(function()
     elseif not frameWasVisible then
       self.securePanelRestoreFrames = nil
       self.openedViaSecurePanel = false
-      self.uiFrame:Show()
+      if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+        self.uiFrame:Show()
+      end
     end
 
     if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
