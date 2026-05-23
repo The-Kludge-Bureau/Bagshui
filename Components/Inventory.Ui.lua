@@ -1359,8 +1359,12 @@ Bagshui:AddComponent(function()
   --- Register the inventory window with Blizzard's secure UIPanel visibility handling.
   --- This allows combat-safe show and hide when the frame becomes protected by
   -- secure child buttons, while leaving Bagshui's own positioning untouched.
+  --- Different inventory types use separate UIPanel areas so ShowUIPanel for
+  --- one does not hide another during combat.
   function Inventory:ConfigureSecurePanelVisibility()
-    if not self.securePanelVisibility or not self.uiFrame or not self.uiFrame.GetName then
+    -- Docked inventories are shown/hidden through their parent frame, not via
+    -- independent ShowUIPanel.
+    if not self.securePanelVisibility or self.dockTo or not self.uiFrame or not self.uiFrame.GetName then
       return
     end
 
@@ -1369,8 +1373,15 @@ Bagshui:AddComponent(function()
       return
     end
 
+    local area
+    if self.inventoryType == BS_INVENTORY_TYPE.BAGS or self.inventoryType == BS_INVENTORY_TYPE.KEYRING then
+      area = "left"
+    else
+      area = "right"
+    end
+
     local panelInfo = _G.UIPanelWindows[frameName] or {
-      area = "center",
+      area = area,
       pushable = 0,
       whileDead = 1,
       allowOtherPanels = true,
@@ -1420,6 +1431,12 @@ Bagshui:AddComponent(function()
 
   --- Display the window.
   function Inventory:Open()
+    -- Docked inventories rely on their parent for visibility during combat.
+    if self.dockTo and _G.InCombatLockdown and _G.InCombatLockdown() then
+      self:SetDockedToFrameVisibility(BS_INVENTORY_UI_VISIBILITY_ACTION.OPEN)
+      return
+    end
+
     local frameWasVisible = self.uiFrame:IsVisible()
     if not frameWasVisible then
       -- Set to `EVENT_PREFIX_` when the event ends in `_OPENED`.
@@ -1435,8 +1452,8 @@ Bagshui:AddComponent(function()
 
     if
       not frameWasVisible
-      and
-      self.securePanelVisibility
+      and not self.dockTo
+      and self.securePanelVisibility
       and _G.InCombatLockdown
       and _G.InCombatLockdown()
       and _G.ShowUIPanel
