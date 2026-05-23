@@ -1371,10 +1371,10 @@ Bagshui:AddComponent(function()
     end
 
     local panelInfo = _G.UIPanelWindows[frameName] or {
-      area = "center",
+      area = "left",
       pushable = 0,
       whileDead = 1,
-      allowOtherPanels = true,
+      allowOtherPanels = false,
     }
     _G.UIPanelWindows[frameName] = panelInfo
     self.uiFrame:SetAttribute("UIPanelLayout-area", panelInfo.area)
@@ -1443,34 +1443,6 @@ Bagshui:AddComponent(function()
       and _G.InCombatLockdown()
       and _G.ShowUIPanel
     then
-      -- Preserve the user's position; UpdateUIPanelPositions would otherwise
-      -- reposition the frame to a default top-left coordinate during combat.
-      -- The position was saved in Close() or falls back to Bagshui's anchor settings.
-      local frameLeft = self._combatFrameLeft
-      local frameTop = self._combatFrameTop
-      self._combatFrameLeft = nil
-      self._combatFrameTop = nil
-      -- Fallback: use the saved window anchor settings when opening for the
-      -- first time during combat (no prior Close() called).
-      if not frameLeft then
-        frameLeft = self.settings.windowAnchorXOffset / self.uiFrame:GetScale()
-        if self.settings.windowAnchorXPoint == "RIGHT" then
-          frameLeft = _G.UIParent:GetWidth() - self.uiFrame:GetWidth() - frameLeft
-        end
-      end
-      if not frameTop then
-        frameTop = self.settings.windowAnchorYOffset / self.uiFrame:GetScale()
-        if self.settings.windowAnchorYPoint == "TOP" then
-          frameTop = _G.GetScreenHeight() - frameTop
-        end
-      end
-      if frameLeft then
-        local leftOffset = tonumber(_G.UIParent:GetAttribute("LEFT_OFFSET")) or 0
-        local topOffset = tonumber(_G.UIParent:GetAttribute("TOP_OFFSET")) or 0
-        self.uiFrame:SetAttribute("UIPanelLayout-xoffset", frameLeft - leftOffset)
-        self.uiFrame:SetAttribute("UIPanelLayout-yoffset", _G.GetScreenHeight() - frameTop + topOffset)
-      end
-
       local restoreFrames = {}
       if _G.GetUIPanel then
         for _, panelKey in ipairs({ "left", "center", "right", "doublewide" }) do
@@ -1508,15 +1480,9 @@ Bagshui:AddComponent(function()
         return
       end
 
-      -- Save frame position so ShowUIPanel can restore it during combat.
-      if _G.InCombatLockdown and _G.InCombatLockdown() and self.securePanelVisibility then
-        self._combatFrameLeft = self.uiFrame:GetLeft()
-        self._combatFrameTop = self.uiFrame:GetTop()
-      end
-
       if (self.securePanelVisibility or self.openedViaSecurePanel) and _G.HideUIPanel then
         _G.HideUIPanel(self.uiFrame, true)
-      else
+      elseif not (_G.InCombatLockdown and _G.InCombatLockdown()) then
         self.uiFrame:Hide()
       end
       self.openedViaSecurePanel = false
@@ -1677,6 +1643,21 @@ Bagshui:AddComponent(function()
     -- Save new values.
     self.settings.windowAnchorXOffset = self:GetWindowOffset(self.settings.windowAnchorXPoint)
     self.settings.windowAnchorYOffset = self:GetWindowOffset(self.settings.windowAnchorYPoint)
+
+    -- Update UIPanelLayout offsets so ShowUIPanel does not reposition the frame
+    -- to a default coordinate during combat.
+    if self.securePanelVisibility and self.uiFrame:GetLeft() then
+      local leftOffset = tonumber(_G.UIParent:GetAttribute("LEFT_OFFSET")) or 0
+      local topOffset = tonumber(_G.UIParent:GetAttribute("TOP_OFFSET")) or 0
+      self.uiFrame:SetAttribute(
+        "UIPanelLayout-xoffset",
+        self.uiFrame:GetLeft() - leftOffset
+      )
+      self.uiFrame:SetAttribute(
+        "UIPanelLayout-yoffset",
+        _G.GetScreenHeight() - self.uiFrame:GetTop() + topOffset
+      )
+    end
 
     -- Allow window updates again.
     self.windowUpdateBlocked = false
