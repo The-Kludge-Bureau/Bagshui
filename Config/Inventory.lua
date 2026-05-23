@@ -147,6 +147,7 @@ Bagshui:AddComponent(function()
       },
 
       opensViaHooks = false,
+      securePanelVisibility = true,
 
       -- Can use Bags if there isn't enough space to swap a bag.
       bagSwappingSupplementalStorage = {
@@ -187,6 +188,7 @@ Bagshui:AddComponent(function()
       },
 
       opensViaHooks = true,
+      securePanelVisibility = true,
 
       hookSettingTranslations = {
         ["KeyRing$"] = "hookBag-2", -- ToggleKeyRing = Bag-2
