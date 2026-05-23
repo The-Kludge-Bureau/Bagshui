@@ -1,16 +1,20 @@
 # Bagshui Changelog
 
-## 2.0.2 - 2026-05-22
+## 2.0.3 - 2026-05-23
 
 ### Fixed
 
-- Prevent right-click from equipping items when selling to a vendor. The secure item-use path was intercepting right-clicks before the merchant sell logic could run, requiring manual cursor clearing to continue.
-- Correct window positioning under custom UI scale and fix combat money frame taint.
-- Restore combat bag toggling.
-
-### Docs
-
-- Fix release download link.
+- Prevent ADDON_ACTION_BLOCKED when clicking lockboxes and other items by routing left-clicks through the secure item-use path when spell targeting is active.
+- Prevent equip attempts during spell targeting (Disenchant, etc.) by restoring the unsafe right-click fallback for the secure item-use button.
+- Restore drag-and-drop broken by blanket left-click secure path (only use the secure path for spell-targeting clicks, not all left-clicks).
+- Restore UI error messages and quest update text that were silently dropped by a parameter mismatch in the UIErrorsFrame_OnEvent hook (WotLK passes the frame as the first argument; the hook handler did not account for this, shifting every parameter by one position).
+- Prevent ADDON_ACTION_BLOCKED when applying poison via the paperdoll during combat (use hooksecurefunc instead of setglobal for PickupInventoryItem and related functions so the original runs in its secure execution context).
+- Enable the clam button for WotLK openable items by detecting the "Use: Open" tooltip prefix (WotLK changed the text from "&lt;Right Click to Open&gt;" to "Use: Open the &lt;item&gt;!" for items such as clams and lockboxes).
+- Prevent ADDON_ACTION_BLOCKED on toolbar buttons (money, hearthstone, clam, pick-lock) during combat by deferring toolbar updates when InCombatLockdown is active.
+- Prevent ADDON_ACTION_BLOCKED when opening Bank and Keyring during combat by enabling securePanelVisibility and using Blizzard's ShowUIPanel/HideUIPanel for all inventory types.
+- Prevent Bank frame from replacing the Bags frame and prevent the Bags window from jumping to top-left when opened via ShowUIPanel during combat (use separate UIPanel areas, save the window position as UIPanelLayout offsets, and restore the native anchor after combat).
+- Prevent ADDON_ACTION_BLOCKED from SetAttribute on secure panels and from docked child frame Hide calls during combat.
+- Prevent third-party (ElvUI) ADDON_ACTION_BLOCKED errors caused by UIPanel area contention with Bagshui's secure panel.
 
 ## 2.0.1 - 2026-05-20
 
