@@ -759,7 +759,13 @@ Bagshui:AddComponent(function()
   ---@param wowApiFunctionName any
   ---@param event any
   ---@param message any
-  function Inventory:UIErrorsFrame_OnEvent(wowApiFunctionName, event, message)
+  --- WotLK's `UIErrorsFrame_OnEvent(self, event, ...)` is called with the frame
+  --- as the first parameter. The hook system passes `wowApiFunctionName, frame, event, message`.
+  ---@param wowApiFunctionName string
+  ---@param frame table UIErrorsFrame.
+  ---@param event string Event name (e.g. "UI_ERROR_MESSAGE").
+  ---@param message string Message text.
+  function Inventory:UIErrorsFrame_OnEvent(wowApiFunctionName, frame, event, message)
     if event == "UI_ERROR_MESSAGE" and message == _G.TEXT(_G.ERR_DESTROY_NONEMPTY_BAG) then
       local newBag, bagSlot
 
@@ -791,6 +797,6 @@ Bagshui:AddComponent(function()
         message = ""
       end
     end
-    self.hooks:OriginalHook(wowApiFunctionName, event, message)
+    self.hooks:OriginalHook(wowApiFunctionName, frame, event, message)
   end
 end)
