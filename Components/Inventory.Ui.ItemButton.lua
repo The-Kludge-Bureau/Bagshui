@@ -139,6 +139,34 @@ Bagshui:AddComponent(function()
       return false
     end
 
+    -- Right-click logic only (left-click is handled in PreClick).
+    if mouseButton == "LeftButton" then
+      return false
+    end
+
+    if mouseButton ~= "RightButton" then
+      return false
+    end
+
+    -- Spell targeting must use Blizzard's normal path (ContainerFrameItemButton_OnClick
+    -- -> UseContainerItem) so the item is targeted for the spell instead of being
+    -- equipped by the secure item-use button.
+    if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
+      return false
+    end
+
+    if self.itemPendingSale and self.itemPendingSale ~= item then
+      return false
+    end
+
+    if
+      Bagshui.cursorBagSlotNum
+      and BsItemInfo:IsContainer(item)
+      and self.inventoryIdsToContainerIds[Bagshui.cursorBagSlotNum]
+    then
+      return false
+    end
+
     if mouseButton == "LeftButton" then
       return (
         -- Mail addon - Alt+click (it only provides right-click).
@@ -307,7 +335,15 @@ Bagshui:AddComponent(function()
     end
 
     local buttonInfo = itemButton.bagshuiData
-    local item = self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum]
+    local item = buttonInfo.item or (self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum])
+
+    -- Always set up secure attributes for left-click on non-empty items.
+    if mouseButton == "LeftButton" and item and item.emptySlot ~= 1 then
+      self:ConfigureSecureItemUseButton(itemButton, buttonInfo.bagNum, buttonInfo.slotNum, mouseButton)
+      return
+    end
+
+    -- For other cases, use the original logic.
     if not self:ShouldUseItemSecurely(item, mouseButton) then
       self:ConfigureSecureItemUseButton(itemButton, nil, nil, mouseButton)
       return
@@ -334,7 +370,24 @@ Bagshui:AddComponent(function()
           "RightButton",
           true
         )
-        self:ConfigureSecureItemUseButton(button, nil, nil, "LeftButton", true)
+        -- For left-click, enable secure use for non-empty items (including saved variable optimization compatibility).
+        local enableSecureLeftClick = (
+          self.online
+          and not self.editMode
+          and item
+          and (
+            (item.emptySlot and item.emptySlot ~= 1)
+            or item.link
+            or (button.bagshuiData.bagNum and button.bagshuiData.slotNum and _G.GetContainerItemLink(button.bagshuiData.bagNum, button.bagshuiData.slotNum))
+          )
+        )
+        self:ConfigureSecureItemUseButton(
+          button,
+          enableSecureLeftClick and button.bagshuiData.bagNum or nil,
+          enableSecureLeftClick and button.bagshuiData.slotNum or nil,
+          "LeftButton",
+          true
+        )
       end
     end
 
@@ -1420,15 +1473,18 @@ _G.IsAddOnLoaded("Postal")
           _G.this = itemButton.bagshuiData.getIdProxy or _G.this
 
           if mouseButton == "LeftButton" then
-            -- Normal left-click.
-            -- This will eventually become a call to ContainerFrameItemButton_OnClick(), which can handle:
-            -- - Control+click dress-up.
-            -- - Shift+click chat links.
-            -- - Shift+click stack splitting.
-            -- - Calling PickupContainerItem() if none of the above are met.
-            -- It also allows hooks to both ContainerFrameItemButton_OnClick() and PickupContainerItem() to work.
-            -- (See the declaration of Bagshui:PickupItem() for details about why it exists.)
-            Bagshui:PickupItem(item, self, itemButton, callPickupContainerItemFromBagshuiPickupItem)
+            -- Skip PickupItem if secure left-click action is configured (secure action already handled it).
+            if buttonInfo.secureItemUseType1 ~= "item" then
+              -- Normal left-click.
+              -- This will eventually become a call to ContainerFrameItemButton_OnClick(), which can handle:
+              -- - Control+click dress-up.
+              -- - Shift+click chat links.
+              -- - Shift+click stack splitting.
+              -- - Calling PickupContainerItem() if none of the above are met.
+              -- It also allows hooks to both ContainerFrameItemButton_OnClick() and PickupContainerItem() to work.
+              -- (See the declaration of Bagshui:PickupItem() for details about why it exists.)
+              Bagshui:PickupItem(item, self, itemButton, callPickupContainerItemFromBagshuiPickupItem)
+            end
           else
             -- Normal right-click.
             -- ContainerFrameItemButton_OnClick() for right button will handle:
