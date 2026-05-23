@@ -1980,6 +1980,13 @@ self.hoveredItem._bagsRepresented
 
   --- Enable/disable/highlight toolbar buttons as appropriate.
   function Inventory:UpdateToolbar()
+    -- During combat lockdown the window is a secure panel; Show/Hide/SetPoint
+    -- on child frames are protected and will be blocked.  Skip the toolbar
+    -- update -- the deferred POST_COMBAT update will refresh everything.
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+      return
+    end
+
     local toolbarButtons = self.ui.buttons.toolbar
 
     -- Resort icon.
