@@ -1359,12 +1359,9 @@ Bagshui:AddComponent(function()
   --- Register the inventory window with Blizzard's secure UIPanel visibility handling.
   --- This allows combat-safe show and hide when the frame becomes protected by
   -- secure child buttons, while leaving Bagshui's own positioning untouched.
-  --- Different inventory types use separate UIPanel areas so ShowUIPanel for
-  --- one does not hide another during combat.
+  --- Only Bags uses this; Bank and Keyring have no reason to open in combat.
   function Inventory:ConfigureSecurePanelVisibility()
-    -- Docked inventories are shown/hidden through their parent frame, not via
-    -- independent ShowUIPanel.
-    if not self.securePanelVisibility or self.dockTo or not self.uiFrame or not self.uiFrame.GetName then
+    if not self.securePanelVisibility or not self.uiFrame or not self.uiFrame.GetName then
       return
     end
 
@@ -1373,15 +1370,8 @@ Bagshui:AddComponent(function()
       return
     end
 
-    local area
-    if self.inventoryType == BS_INVENTORY_TYPE.BAGS or self.inventoryType == BS_INVENTORY_TYPE.KEYRING then
-      area = "left"
-    else
-      area = "right"
-    end
-
     local panelInfo = _G.UIPanelWindows[frameName] or {
-      area = area,
+      area = "center",
       pushable = 0,
       whileDead = 1,
       allowOtherPanels = true,
@@ -1427,16 +1417,12 @@ Bagshui:AddComponent(function()
         end
       end
     end
+    -- Restore Bagshui's own anchor; ShowUIPanel re-anchored the frame to TOPLEFT.
+    self:FixWindowPosition()
   end
 
   --- Display the window.
   function Inventory:Open()
-    -- Docked inventories rely on their parent for visibility during combat.
-    if self.dockTo and _G.InCombatLockdown and _G.InCombatLockdown() then
-      self:SetDockedToFrameVisibility(BS_INVENTORY_UI_VISIBILITY_ACTION.OPEN)
-      return
-    end
-
     local frameWasVisible = self.uiFrame:IsVisible()
     if not frameWasVisible then
       -- Set to `EVENT_PREFIX_` when the event ends in `_OPENED`.
@@ -1452,12 +1438,39 @@ Bagshui:AddComponent(function()
 
     if
       not frameWasVisible
-      and not self.dockTo
       and self.securePanelVisibility
       and _G.InCombatLockdown
       and _G.InCombatLockdown()
       and _G.ShowUIPanel
     then
+      -- Preserve the user's position; UpdateUIPanelPositions would otherwise
+      -- reposition the frame to a default top-left coordinate during combat.
+      -- The position was saved in Close() or falls back to Bagshui's anchor settings.
+      local frameLeft = self._combatFrameLeft
+      local frameTop = self._combatFrameTop
+      self._combatFrameLeft = nil
+      self._combatFrameTop = nil
+      -- Fallback: use the saved window anchor settings when opening for the
+      -- first time during combat (no prior Close() called).
+      if not frameLeft then
+        frameLeft = self.settings.windowAnchorXOffset / self.uiFrame:GetScale()
+        if self.settings.windowAnchorXPoint == "RIGHT" then
+          frameLeft = _G.UIParent:GetWidth() - self.uiFrame:GetWidth() - frameLeft
+        end
+      end
+      if not frameTop then
+        frameTop = self.settings.windowAnchorYOffset / self.uiFrame:GetScale()
+        if self.settings.windowAnchorYPoint == "TOP" then
+          frameTop = _G.GetScreenHeight() - frameTop
+        end
+      end
+      if frameLeft then
+        local leftOffset = tonumber(_G.UIParent:GetAttribute("LEFT_OFFSET")) or 0
+        local topOffset = tonumber(_G.UIParent:GetAttribute("TOP_OFFSET")) or 0
+        self.uiFrame:SetAttribute("UIPanelLayout-xoffset", frameLeft - leftOffset)
+        self.uiFrame:SetAttribute("UIPanelLayout-yoffset", _G.GetScreenHeight() - frameTop + topOffset)
+      end
+
       local restoreFrames = {}
       if _G.GetUIPanel then
         for _, panelKey in ipairs({ "left", "center", "right", "doublewide" }) do
@@ -1493,6 +1506,12 @@ Bagshui:AddComponent(function()
         and (self.lastOpenEventTrigger == nil or (not string.find(_G.event, "^" .. self.lastOpenEventTrigger)))
       then
         return
+      end
+
+      -- Save frame position so ShowUIPanel can restore it during combat.
+      if _G.InCombatLockdown and _G.InCombatLockdown() and self.securePanelVisibility then
+        self._combatFrameLeft = self.uiFrame:GetLeft()
+        self._combatFrameTop = self.uiFrame:GetTop()
       end
 
       if (self.securePanelVisibility or self.openedViaSecurePanel) and _G.HideUIPanel then
