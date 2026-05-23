@@ -205,6 +205,11 @@ _G.CursorHasItem()
   --- Reset our cursor item tracking when the cursor is emptied.
   ---@param wowApiFunctionName string? Hooked WoW API function that triggered this call.
   function Bagshui:ClearCursor(wowApiFunctionName)
+    -- Protected functions cannot be called from addon code during combat lockdown.
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+      return
+    end
+
     self.cursorItem = nil
     if self.cursorItemOwningFrame then
       self.cursorItemOwningFrame.bagshuiData.hasCursorItem = nil
@@ -237,44 +242,26 @@ _G.CursorHasItem()
     end
   end
 
-  --- When containers are moved between slots, we need to do a fresh cache initialization for every `[bagNum][slotNum]`.
-  --- This results in the stock states being reset and every item becoming "new" when someone reorders their bags.
-  --- To prevent this, a shadow cache of stock state info is stored in `Inventory.shadowStockState`/`shadowBagshuiDate`,
-  --- and the restore is triggered by `Bagshui.pickedUpBagSlotNum`/`putDownBagSlotNum`, which are set here.
-  ---
-  --- By hooking `PickupBagFromSlot()`, `PickupInventoryItem()`, and `PutItemInBag()`, we can cover all the ways containers are
-  --- picked up/put down, and track the changes that occur. Then `Inventory:Update()` can use that information to better
-  --- manage the stock state.
-  ---
-  --- Note that since these API functions receive inventory slot IDs, not container numbers, the `Inventory.inventoryIdsToContainerIds`
-  --- table must be used to translate into something that will match `Inventory.containerIds`.
+  --- Post-hook for `PickupBagFromSlot()`, `PickupInventoryItem()`, and `PutItemInBag()`.
+  --- Registered via `hooksecurefunc` so the original runs in its secure context
+  --- and ADDON_ACTION_BLOCKED is avoided during combat lockdown.
   ---@param wowApiFunctionName string Hooked WoW API function that triggered this call.
-  ---@param invSlotId number Inventory slot ID to pick up the item from.
-  ---@return any wowApiFunctionReturnValue Return value from hooked WoW API function.
-  function Bagshui:PickupInventoryItem(wowApiFunctionName, invSlotId)
-    --self:PrintDebug("Bagshui:PickupInventoryItem() called from " .. tostring(wowApiFunctionName) .. " with invSlotId " .. tostring(invSlotId))
-
-    -- Only store bag slot information if there's currently a bag on the cursor
-    -- and the destination is different from the source.
+  ---@param invSlotId number Inventory slot ID.
+  function Bagshui:PickupInventoryItemPostHook(wowApiFunctionName, invSlotId)
+    -- Track bag putdown: was there a bag on the cursor that was just placed?
     if
-      _G.CursorHasItem()
-      and self.cursorItem == nil
+      not _G.CursorHasItem()
       and self.cursorBagSlotNum ~= nil
-      and self.cursorBagSlotNum ~= invSlotId
     then
-      self.pickedUpBagSlotNum = self.cursorBagSlotNum
-      self.putDownBagSlotNum = invSlotId
-    elseif self.cursorBagSlotNum == invSlotId then
-      -- Bag was put back down in the same place.
-      self.pickedUpBagSlotNum = nil
-      self.putDownBagSlotNum = nil
+      if self.cursorBagSlotNum ~= invSlotId then
+        self.pickedUpBagSlotNum = self.cursorBagSlotNum
+        self.putDownBagSlotNum = invSlotId
+      else
+        self.pickedUpBagSlotNum = nil
+        self.putDownBagSlotNum = nil
+      end
+      self.cursorBagSlotNum = nil
     end
-
-    -- cursorBagSlotNum will be compared with arg1 (invSlotId) of the second call to an API function to determine whether a change was made.
-    self.cursorBagSlotNum = nil
-
-    -- Let WoW handle all the actual work.
-    local ret = self.hooks:OriginalHook(wowApiFunctionName, invSlotId)
 
     -- A bag was picked up.
     if
@@ -285,15 +272,12 @@ _G.CursorHasItem()
       if wowApiFunctionName == "PickupBagFromSlot" then
         self.cursorBagSlotNum = invSlotId
       else
-        -- This could be a bag or an inventory item. Make sure it's a bag
-        -- or there will be errors from Bagshui:PickupItem().
         for _, inventoryType in pairs(BS_INVENTORY_TYPE) do
           if
             self.components[inventoryType]
             and self.components[inventoryType].inventoryIdsToContainerIds
             and self.components[inventoryType].inventoryIdsToContainerIds[invSlotId]
           then
-            --self:PrintDebug("> " .. inventoryType .. " has matching invSlotId for bag slot")
             self.cursorBagSlotNum = invSlotId
             break
           end
@@ -301,14 +285,18 @@ _G.CursorHasItem()
       end
     end
 
-    --self:PrintDebug("> cursorBagSlotNum is now " .. tostring(self.cursorBagSlotNum))
-
-    -- PutItemInBag() doesn't trigger any of our normal cursor clearing methods,
-    -- so a manual check on the next frame is needed to ensure accuracy.
-    -- (Just calling it for all the hooks to be safe).
     self:QueueClassCallback(self, self.CheckCursor)
-
-    -- Some of the API functions expect return values, so always return what we got back from the original call.
-    return ret
   end
+
+  -- Register post-hooks for protected cursor functions so the original runs
+  -- in its secure execution context during combat.
+  _G.hooksecurefunc("PickupInventoryItem", function(invSlotId)
+    Bagshui:PickupInventoryItemPostHook("PickupInventoryItem", invSlotId)
+  end)
+  _G.hooksecurefunc("PickupBagFromSlot", function(slotId)
+    Bagshui:PickupInventoryItemPostHook("PickupBagFromSlot", slotId)
+  end)
+  _G.hooksecurefunc("PutItemInBag", function(slotId)
+    Bagshui:PickupInventoryItemPostHook("PutItemInBag", slotId)
+  end)
 end)
