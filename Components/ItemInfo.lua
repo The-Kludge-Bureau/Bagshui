@@ -358,7 +358,7 @@ not validate
             item.tooltip = item.tooltip .. BS_INVENTORY_TOOLTIP_JOIN_CHARACTERS[lr] .. ttText
 
             -- Check whether openable or lock-pickable.
-            if ttText == L.TooltipIdentifier_Openable then
+            if ttText == L.TooltipIdentifier_Openable or (L.TooltipIdentifier_OpenableWotlk and string.find(ttText, L.TooltipIdentifier_OpenableWotlk)) then
               item.openable = 1
             end
             if ttText == L.TooltipIdentifier_Locked then

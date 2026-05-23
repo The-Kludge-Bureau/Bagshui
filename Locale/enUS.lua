@@ -516,6 +516,7 @@ Bagshui:LoadComponent(function()
     ["TooltipIdentifier_MountAQ40"] = [[Use: Emits a high frequency sound]],
     ["TooltipIdentifier_Mount_TurtleWoW"] = [[Use: Adds a mount to the player's mount collection]], -- Turtle has a completely different tooltip for mounts.
     ["TooltipIdentifier_Openable"] = [[<Right Click to Open>]],
+    ["TooltipIdentifier_OpenableWotlk"] = [[^Use: Open]],
     ["TooltipIdentifier_PotionHealth"] = [[/Restores %d+ to %d+ health\./]], -- Wrap in slashes to activate pattern matching.
     ["TooltipIdentifier_PotionMana"] = [[/Restores %d+ to %d+ mana\./]], -- Wrap in slashes to activate pattern matching.
     ["TooltipIdentifier_QuestItem"] = [[Quest Item]],
