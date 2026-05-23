@@ -337,10 +337,14 @@ Bagshui:AddComponent(function()
     local buttonInfo = itemButton.bagshuiData
     local item = buttonInfo.item or (self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum])
 
-    -- Always set up secure attributes for left-click on non-empty items.
-    if mouseButton == "LeftButton" and item and item.emptySlot ~= 1 then
-      self:ConfigureSecureItemUseButton(itemButton, buttonInfo.bagNum, buttonInfo.slotNum, mouseButton)
-      return
+    -- Use secure path for left-click only when spell targeting (lockboxes, etc.)
+    if mouseButton == "LeftButton" then
+      if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
+        self:ConfigureSecureItemUseButton(itemButton, buttonInfo.bagNum, buttonInfo.slotNum, mouseButton)
+        return
+      end
+      -- For other left-clicks, fall through to ShouldUseItemSecurely which returns
+      -- false and clears secure attributes, allowing normal PickupContainerItem flow.
     end
 
     -- For other cases, use the original logic.
@@ -368,24 +372,6 @@ Bagshui:AddComponent(function()
           enableSecureRightClick and button.bagshuiData.bagNum or nil,
           enableSecureRightClick and button.bagshuiData.slotNum or nil,
           "RightButton",
-          true
-        )
-        -- For left-click, enable secure use for non-empty items (including saved variable optimization compatibility).
-        local enableSecureLeftClick = (
-          self.online
-          and not self.editMode
-          and item
-          and (
-            (item.emptySlot and item.emptySlot ~= 1)
-            or item.link
-            or (button.bagshuiData.bagNum and button.bagshuiData.slotNum and _G.GetContainerItemLink(button.bagshuiData.bagNum, button.bagshuiData.slotNum))
-          )
-        )
-        self:ConfigureSecureItemUseButton(
-          button,
-          enableSecureLeftClick and button.bagshuiData.bagNum or nil,
-          enableSecureLeftClick and button.bagshuiData.slotNum or nil,
-          "LeftButton",
           true
         )
       end
