@@ -49,8 +49,7 @@
 
 ### Easy mode (recommended)
 
-Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
-<sup>Or any tool that supports Git.</sup>
+Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/) or [Snapjaw](https://github.com/refaim/snapjaw/).
 
 ### Manual
 
@@ -65,89 +64,7 @@ Use [GitAddonsManager](https://woblight.gitlab.io/overview/gitaddonsmanager/).
    × `Bagshui\Bagshui-main\Bagshui.toc`
    </sup>
 
-## Compatibility
-
-### Functionality
-
-<table>
-
-<tr>
-<td>
-
-### Auction and Mail
-
-<sup>Right-click/Alt+click attach</sup>
-
-</td>
-<td>
-
-- Blizzard UI
-- [aux](https://github.com/gwetchen/aux-addon)
-- [Mail](https://github.com/EinBaum/Mail)
-- [Postal Returned](https://github.com/veechs/Postal-Returned) / Postal / CT_MailMod
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### Cooldown counts
-
-</td>
-<td>
-
-- [OmniCC](https://github.com/Otari98/OmniCC)
-- [pfUI](https://shagu.org/pfUI/)
-- [ShaguTweaks](https://shagu.org/ShaguTweaks/)
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### Interface replacement
-
-</td>
-<td>
-
-- [pfUI](https://shagu.org/pfUI/) skin \
-  <sup>Manage in **pfUI Config** (`/pfui`) > **Components** > **Skins**</sup>
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### [Rule functions](https://github.com/veechs/Bagshui/wiki/Rules#available-rule-functions)
-
-</td>
-<td>
-
-- `Outfit()` - [ItemRack](https://turtle-wow.fandom.com/wiki/ItemRack) and [Outfitter](https://github.com/pepopo978/Outfitter)
-- `Wishlist()` - [AtlasLoot](https://turtle-wow.fandom.com/wiki/AtlasLoot)
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### Guild Bank
-
-</td>
-<td>
-
-- **Guild Bank** right-click to deposit.
-
-</td>
-</tr>
-
-</table>
-
-### Languages
+## Languages
 
 If Bagshui has not been localized for your client, many items will not be correctly identified by the built-in categorization[^1]. Please consider [contributing a translation](Locale/Readme.md) if you'd like to have full functionality!
 
