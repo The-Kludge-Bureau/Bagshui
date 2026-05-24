@@ -500,7 +500,7 @@ Bagshui:LoadComponent(function()
     -- Figure out border color.
     -- It's typically the quality color, but can be forced to something else.
     if inventory or buttonInfo.colorBorders then
-      local qualityColor = _G.ITEM_QUALITY_COLORS[item.quality or 1]
+      local qualityColor = _G.ITEM_QUALITY_COLORS[item.quality and item.quality >= 0 and item.quality or 1]
       if buttonInfo.forceBorderDisplay then
         if (item.quality or 1) == 1 then
           qualityColor = BsSkin.itemSlotBorderDefaultColor
