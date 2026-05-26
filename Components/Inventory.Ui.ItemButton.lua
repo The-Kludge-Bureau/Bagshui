@@ -15,8 +15,14 @@ Bagshui:AddComponent(function()
 
     itemButton:SetAttribute("type1", buttonInfo and buttonInfo.secureItemUseType1 or nil)
     itemButton:SetAttribute("item1", buttonInfo and buttonInfo.secureItemUseItem1 or nil)
+    itemButton:SetAttribute("target-bag1", nil)
+    itemButton:SetAttribute("target-slot1", nil)
+    itemButton:SetAttribute("target-item1", nil)
     itemButton:SetAttribute("type2", buttonInfo and buttonInfo.secureItemUseType2 or nil)
     itemButton:SetAttribute("item2", buttonInfo and buttonInfo.secureItemUseItem2 or nil)
+    itemButton:SetAttribute("target-bag2", nil)
+    itemButton:SetAttribute("target-slot2", nil)
+    itemButton:SetAttribute("target-item2", nil)
 
     if buttonInfo then
       buttonInfo.secureItemUseButton = nil
@@ -120,9 +126,8 @@ Bagshui:AddComponent(function()
       return false
     end
 
-    -- Spell targeting must use Blizzard's normal path (ContainerFrameItemButton_OnClick
-    -- -> UseContainerItem) so the item is targeted for the spell instead of being
-    -- equipped by the secure item-use button.
+    -- Spell targeting uses dedicated secure target-bag/target-slot attributes in
+    -- PreClick so the click stays secure without going through secure item use.
     if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
       return false
     end
@@ -148,9 +153,8 @@ Bagshui:AddComponent(function()
       return false
     end
 
-    -- Spell targeting must use Blizzard's normal path (ContainerFrameItemButton_OnClick
-    -- -> UseContainerItem) so the item is targeted for the spell instead of being
-    -- equipped by the secure item-use button.
+    -- Spell targeting uses dedicated secure target-bag/target-slot attributes in
+    -- PreClick so the click stays secure without going through secure item use.
     if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
       return false
     end
@@ -319,6 +323,29 @@ Bagshui:AddComponent(function()
     end
   end
 
+  --- Configure secure spell-target attributes for the current bag and slot.
+  ---@param button table
+  ---@param bagNum number?
+  ---@param slotNum number?
+  ---@param mouseButton string?
+  function Inventory:ConfigureSecureSpellTargetButton(button, bagNum, slotNum, mouseButton)
+    if not button or (_G.InCombatLockdown and _G.InCombatLockdown()) then
+      return
+    end
+
+    local buttonSuffix = (mouseButton == "RightButton" and "2") or "1"
+
+    button:SetAttribute("target-bag" .. buttonSuffix, type(bagNum) == "number" and bagNum or nil)
+    button:SetAttribute("target-slot" .. buttonSuffix, type(slotNum) == "number" and slotNum or nil)
+    button:SetAttribute("target-item" .. buttonSuffix, nil)
+
+    if type(bagNum) == "number" and type(slotNum) == "number" and button.bagshuiData then
+      button.bagshuiData.secureItemUseButton = (buttonSuffix == "2" and "RightButton") or "LeftButton"
+    elseif button.bagshuiData then
+      button.bagshuiData.secureItemUseButton = nil
+    end
+  end
+
   --- Prepare secure item-use attributes for the current click when Wrath requires them.
   ---@param mouseButton string
   ---@param itemButton table?
@@ -337,17 +364,19 @@ Bagshui:AddComponent(function()
     local buttonInfo = itemButton.bagshuiData
     local item = buttonInfo.item or (self.inventory[buttonInfo.bagNum] and self.inventory[buttonInfo.bagNum][buttonInfo.slotNum])
 
-    -- Use secure path for left-click only when spell targeting (lockboxes, etc.)
-    if mouseButton == "LeftButton" then
-      if _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
-        self:ConfigureSecureItemUseButton(itemButton, buttonInfo.bagNum, buttonInfo.slotNum, mouseButton)
-        return
-      end
-      -- For other left-clicks, fall through to ShouldUseItemSecurely which returns
-      -- false and clears secure attributes, allowing normal PickupContainerItem flow.
+    -- Item-target spells must stay on a secure path, but secure item-use can
+    -- equip gear before targeting it. Use Wrath's secure target-bag/slot
+    -- attributes instead so the click resolves to UseContainerItem() securely.
+    if mouseButton == "LeftButton" and _G.SpellCanTargetItem and _G.SpellCanTargetItem() then
+      self:ConfigureSecureSpellTargetButton(
+        itemButton,
+        item and item.emptySlot ~= 1 and buttonInfo.bagNum or nil,
+        item and item.emptySlot ~= 1 and buttonInfo.slotNum or nil,
+        mouseButton
+      )
+      return
     end
 
-    -- For other cases, use the original logic.
     if not self:ShouldUseItemSecurely(item, mouseButton) then
       self:ConfigureSecureItemUseButton(itemButton, nil, nil, mouseButton)
       return
