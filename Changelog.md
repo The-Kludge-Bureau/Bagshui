@@ -1,5 +1,16 @@
 # Bagshui Changelog
 
+## 2.0.4 - 2026-05-26
+
+### Changed
+
+- Update the installation guidance to recommend GitAddonsManager or Snapjaw and remove outdated compatibility notes that no longer apply to the WotLK 3.3.5a target.
+
+### Fixed
+
+- Prevent a crash while updating item button borders when the client reports an item quality of `-1` (unknown).
+- Restore Disenchant item targeting from Bagshui inventory slots when the spell is activated from either the Bagshui toolbar or the spellbook.
+
 ## 2.0.3 - 2026-05-23
 
 ### Fixed
