@@ -492,80 +492,105 @@ Bagshui:AddComponent(function()
   --- `slotButton.bagshuiData.getIdProxy' property. It's then available for other
   --- code to use and pass upstream (or is it downstream?) to Blizzard code.
   ---@param slotButton table Button to create proxy frames for.
+  --- A single shared pair of GetID proxy frames, reused for every item button
+  --- instead of creating a pair per button. Each item button previously got two
+  --- CreateFrame proxies; with many slots that inflated the global frame count
+  --- enough to trigger an EnumerateFrames cycle in other addons (notably
+  --- Auctionator's Atr_LocalizeFrames), freezing/crashing the client on auction
+  --- house open. One shared pair, re-pointed at the button currently being handed
+  --- to Blizzard's ContainerFrameItemButton_ code, keeps GetID()/GetParent():GetID()
+  --- behavior identical while creating a constant number of frames.
+  local getIdProxy_target        -- item button the shared proxy currently represents
+  local getIdProxy_realParent    -- real parent of getIdProxy_target
+  local getIdProxy_slotButtonProxy
+  local getIdProxy_parentProxy
+
+  --- Proxy for `getIdProxy_target:GetID()` -- returns its slot number.
+  local function getIdProxy_getItemSlot(_)
+    return getIdProxy_target.bagshuiData.slotNum
+  end
+
+  --- Proxy for `getIdProxy_target:GetParent()`.
+  local function getIdProxy_getItemButtonParent(_)
+    getIdProxy_realParent = getIdProxy_target:GetParent()
+    -- Update userdata property of proxy frame.
+    getIdProxy_parentProxy[0] = getIdProxy_realParent[0]
+    return getIdProxy_parentProxy
+  end
+
+  --- Proxy for `getIdProxy_target:GetParent():GetID()` -- returns its bag number.
+  local function getIdProxy_getItemBag(_)
+    return getIdProxy_target.bagshuiData.bagNum
+  end
+
+  --- Lazily create the shared proxy frame pair (and their metatables).
+  local function ensureGetIdProxy()
+    if getIdProxy_slotButtonProxy then
+      return
+    end
+    getIdProxy_slotButtonProxy = _G.CreateFrame("Button")
+    getIdProxy_parentProxy = _G.CreateFrame("Frame")
+
+    -- Metatable that makes `getIdProxy_slotButtonProxy` act like the target button.
+    setmetatable(getIdProxy_slotButtonProxy, {
+      __index = function(_, key)
+        if key == "GetID" then
+          return getIdProxy_getItemSlot
+        elseif key == "GetParent" then
+          return getIdProxy_getItemButtonParent
+        else
+          return getIdProxy_target[key]
+        end
+      end,
+      __newindex = function(_, key, val)
+        getIdProxy_target[key] = val
+      end,
+    })
+
+    -- Metatable that makes `getIdProxy_parentProxy` act like the target's parent.
+    setmetatable(getIdProxy_parentProxy, {
+      __index = function(_, key)
+        if key == "GetID" then
+          return getIdProxy_getItemBag
+        else
+          return getIdProxy_realParent[key]
+        end
+      end,
+      __newindex = function(_, key, val)
+        getIdProxy_realParent[key] = val
+      end,
+    })
+  end
+
+  --- Point the shared GetID proxy at `slotButton` and return it, or return nil if
+  --- the button isn't flagged for proxying. The returned frame behaves like
+  --- `slotButton` except GetID() returns its slot number and GetParent():GetID()
+  --- returns its bag number, which is what Blizzard's ContainerFrameItemButton_
+  --- code expects. Safe because the call sites below use it synchronously, so the
+  --- single shared target is never contended.
+  ---@param slotButton table? Item button to represent.
+  ---@return table? proxy
+  local function resolveGetIdProxy(slotButton)
+    if not (slotButton and slotButton.bagshuiData and slotButton.bagshuiData.getIdProxy) then
+      return nil
+    end
+    ensureGetIdProxy()
+    getIdProxy_target = slotButton
+    -- Redirect frame userdata to avoid errors.
+    -- Credit: https://www.wowinterface.com/forums/showthread.php?t=53928
+    getIdProxy_slotButtonProxy[0] = slotButton[0]
+    return getIdProxy_slotButtonProxy
+  end
+
+  --- Flag `slotButton` as needing the shared GetID proxy for Blizzard's
+  --- ContainerFrameItemButton_ compatibility. No longer creates per-button frames;
+  --- the actual proxy is resolved on demand via `resolveGetIdProxy()`.
+  ---@param slotButton table Button to flag.
   function InventoryUi:AddItemSlotButtonGetIdProxy(slotButton)
     if not slotButton.bagshuiData then
       slotButton.bagshuiData = {}
     end
-
-    -- Proxy for `slotButton` that was created above.
-    -- Will override `GetID()` and `GetParent()`.
-    local slotButtonProxy = _G.CreateFrame("Button")
-    -- Store the proxy so it can be used by `Inventory:ItemButton_OnClick/OnEnter()`
-    slotButton.bagshuiData.getIdProxy = slotButtonProxy
-    -- Proxy for `slotButton`'s parent frame.
-    -- Will override `GetID()` only.
-    local parentProxy = _G.CreateFrame("Frame")
-    -- Reference to `slotButton`'s actual parent frame, updated
-    -- by `getItemButtonParent()`.
-    local realParent
-
-    --- Proxy function for `slotButton:GetID()`.
-    --- Always returns the slot number of the item assigned to the button.
-    local function getItemSlot(_)
-      return slotButton.bagshuiData.slotNum
-    end
-
-    --- Proxy function for `slotButton:GetParent()`.
-    --- Stores the real parent frame so the metatable knows where to
-    --- redirect everything other than GetID().
-    local function getItemButtonParent(_)
-      realParent = slotButton:GetParent()
-      -- Update userdata property of proxy frame.
-      parentProxy[0] = realParent[0]
-      return parentProxy
-    end
-
-    --- Proxy function for `slotButton:GetParent():GetID()`.
-    --- Always returns the bag number of the item assigned to the button.
-    local function getItemBag(_)
-      return slotButton.bagshuiData.bagNum
-    end
-
-    -- Metatable that makes `slotButtonProxy` work.
-    local slotButtonMetatable = {
-      __index = function(_, key)
-        if key == "GetID" then
-          return getItemSlot
-        elseif key == "GetParent" then
-          return getItemButtonParent
-        else
-          return slotButton[key]
-        end
-      end,
-      __newindex = function(_, key, val)
-        slotButton[key] = val
-      end,
-    }
-    setmetatable(slotButtonProxy, slotButtonMetatable)
-    -- Redirect frame userdata to avoid errors.
-    -- Credit: https://www.wowinterface.com/forums/showthread.php?t=53928
-    slotButtonProxy[0] = slotButton[0]
-
-    -- Metatable that makes `parentProxy` work.
-    local parentMetatable = {
-      __index = function(_, key)
-        if key == "GetID" then
-          return getItemBag
-        else
-          return realParent[key]
-        end
-      end,
-      __newindex = function(_, key, val)
-        realParent[key] = val
-      end,
-    }
-    -- The userdata (table key 0) is updated in getItemButtonParent() since it changes.
-    setmetatable(parentProxy, parentMetatable)
+    slotButton.bagshuiData.getIdProxy = true
   end
 
   --- OnEnter mostly handles tooltip stuff.
@@ -727,8 +752,9 @@ Bagshui:AddComponent(function()
           -- In addition to the above, we need to use our metatable'd proxy frame
           -- (set up in InventoryUi:CreateInventoryItemSlotButton()) so the
           -- GetID() and GetParent():GetID() functions will be overridden.
-          _G.this = itemButton.bagshuiData.getIdProxy or _G.this
-          _G[self.itemSlotTooltipFunction](itemButton.bagshuiData.getIdProxy)
+          local getIdProxy = resolveGetIdProxy(itemButton)
+          _G.this = getIdProxy or _G.this
+          _G[self.itemSlotTooltipFunction](getIdProxy)
           _G.this = oldGlobalThis
           -- `ContainerFrameItemButton_OnEnter()` will change the tooltip position
           -- to something that ignores our custom offsets, so we need to fix that.
@@ -1485,7 +1511,7 @@ _G.IsAddOnLoaded("Postal")
           -- meaning of global this while any code outside our control
           -- is executed.
           local oldGlobalThis = _G.this
-          _G.this = itemButton.bagshuiData.getIdProxy or _G.this
+          _G.this = resolveGetIdProxy(itemButton) or _G.this
 
           if mouseButton == "LeftButton" then
             -- Skip PickupItem if secure left-click action is configured (secure action already handled it).
